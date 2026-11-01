@@ -11,14 +11,22 @@ const envSchema = z.object({
   API_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(120),
   // AI routes: stricter per-user limit, since each call costs money and time.
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(10),
-  // Optional: without a key the API runs and AI routes answer 503.
+  // Which AI provider writes plan text. Without its key the API still runs and AI routes answer 503.
+  AI_PROVIDER: z.enum(['gemini', 'claude']).default('gemini'),
+  ANTHROPIC_API_KEY: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => v || undefined),
+  CLAUDE_MODEL: z.string().min(1).default('claude-opus-5-5'),
   GEMINI_API_KEY: z
     .string()
     .trim()
     .optional()
     .transform((v) => v || undefined), // blank (as in .env.example) = not configured
   GEMINI_MODEL: z.string().min(1).default('gemini-flash-latest'),
-  AI_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+  // Below the client's 60 s AI timeout; covers retries.
+  AI_TIMEOUT_MS: z.coerce.number().int().positive().default(45_000),
 })
 
 export type Env = z.infer<typeof envSchema>

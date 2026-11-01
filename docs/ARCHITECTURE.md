@@ -296,3 +296,9 @@ Budget allocation starts from the spec split (§11 of the product spec), applies
 - **Plan editing:** `PUT /api/events/:id/plan/schedule` saves the edited event-day agenda as a new plan version, validated against `eventPlanSchema` and sorted by time. Because the context fingerprint is unchanged, a later plain "generate" keeps the edit; "regenerate" replaces it.
 - **Deadlines:** suggested tasks for an event whose date has passed are left undated. The Timeline explains how deadlines are set, using the profile time zone.
 - **Invitations:** templates for all four tones are filled from the event, with bracketed placeholders for unknown details. "Write with AI" is the AI option. Sharing works through the browser share sheet, copy, a WhatsApp link (`wa.me`) or the email app (`mailto:`). No messaging integration or account access is involved.
+
+### AI providers
+
+`AI_PROVIDER` selects `gemini.ts` or `claude.ts`; both implement `AIProvider` and nothing else in the codebase knows which one is running. `generateStructured` sends a standard JSON Schema (from `z.toJSONSchema`) and each provider adapts it to its own dialect. Gemini keeps its supported keyword subset. Claude closes every object (`additionalProperties: false`), drops length, item-count and numeric limits, and rewrites `type: [x, "null"]` as `anyOf`. Zod re-validates every response either way.
+
+The Claude provider uses structured outputs (`output_config.format`) at `effort: "medium"`, adds token headroom because adaptive thinking shares `max_tokens`, and opts into server-side refusal fallback (`fallbacks: "default"`). It treats `refusal` and `max_tokens` stop reasons as invalid output, allows one SDK retry, and enforces an overall deadline with an abort signal.

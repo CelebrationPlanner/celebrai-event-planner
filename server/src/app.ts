@@ -3,6 +3,7 @@ import express, { type RequestHandler } from 'express'
 import { rateLimit } from 'express-rate-limit'
 import helmet from 'helmet'
 import { randomUUID } from 'node:crypto'
+import { createClaudeProvider } from './ai/claude.ts'
 import { createGeminiProvider } from './ai/gemini.ts'
 import { unconfiguredProvider, type AIProvider } from './ai/provider.ts'
 import type { Env } from './config/env.ts'
@@ -29,11 +30,17 @@ function requestLog(enabled: boolean): RequestHandler {
   }
 }
 
+/** The configured AI provider, or one that answers "unavailable" when its key is missing. */
+function selectProvider(env: Env): AIProvider {
+  const timeoutMs = env.AI_TIMEOUT_MS
+  if (env.AI_PROVIDER === 'claude') return env.ANTHROPIC_API_KEY ? createClaudeProvider({ apiKey: env.ANTHROPIC_API_KEY, model: env.CLAUDE_MODEL, timeoutMs }) : unconfiguredProvider
+  return env.GEMINI_API_KEY ? createGeminiProvider({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL, timeoutMs }) : unconfiguredProvider
+}
+
 const rateLimited = () => new AppError(429, 'RATE_LIMITED', 'Too many requests. Please wait a moment and try again.')
 
 export function createApp(env: Env, deps: { ai?: AIProvider } = {}) {
-  const ai =
-    deps.ai ?? (env.GEMINI_API_KEY ? createGeminiProvider({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL, timeoutMs: env.AI_TIMEOUT_MS }) : unconfiguredProvider)
+  const ai = deps.ai ?? selectProvider(env)
   // Per user (not per IP), applied after authentication on AI routes only.
   const aiLimiter = rateLimit({
     windowMs: env.RATE_LIMIT_WINDOW_MS,

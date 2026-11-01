@@ -90,6 +90,11 @@ describe('loadEnv', () => {
     expect(loadEnv({ ...baseEnv, GEMINI_API_KEY: '  ' }).GEMINI_API_KEY).toBeUndefined()
   })
 
+  it('selects the AI provider and treats a blank Anthropic key as not configured', () => {
+    expect(loadEnv({ ...baseEnv, AI_PROVIDER: 'claude', ANTHROPIC_API_KEY: '' })).toMatchObject({ AI_PROVIDER: 'claude', ANTHROPIC_API_KEY: undefined, CLAUDE_MODEL: 'claude-opus-5-5' })
+    expect(() => loadEnv({ ...baseEnv, AI_PROVIDER: 'openai' })).toThrow(/AI_PROVIDER/)
+  })
+
   it('applies defaults', () => {
     expect(loadEnv(baseEnv)).toMatchObject({ NODE_ENV: 'test', PORT: 5000, RATE_LIMIT_WINDOW_MS: 60_000, API_RATE_LIMIT_MAX_REQUESTS: 120 })
   })

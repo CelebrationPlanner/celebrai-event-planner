@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { buildChatPrompt, SYSTEM_RULES } from './prompts.ts'
 import { AiError, type AIProvider } from './provider.ts'
-import { generateStructured, toProviderSchema } from './structured.ts'
+import { toGeminiSchema } from './gemini.ts'
+import { generateStructured } from './structured.ts'
 
 const fake = (output: unknown): AIProvider => ({ name: 'fake', generateJson: async () => output })
 const schema = z.object({ reply: z.string().min(1).max(20) })
@@ -27,9 +28,9 @@ describe('generateStructured (output parser)', () => {
   })
 })
 
-describe('toProviderSchema', () => {
+describe('toGeminiSchema', () => {
   it('keeps only JSON Schema keywords Gemini supports', () => {
-    const json = toProviderSchema(z.object({ name: z.string().max(5).regex(/a/), tags: z.array(z.string()).max(3), n: z.number().int().min(0).nullable() }))
+    const json = toGeminiSchema(z.toJSONSchema(z.object({ name: z.string().max(5).regex(/a/), tags: z.array(z.string()).max(3), n: z.number().int().min(0).nullable() })))
     const text = JSON.stringify(json)
     expect(text).not.toMatch(/maxLength|pattern|\$schema/)
     expect(text).toMatch(/"maxItems":3/)

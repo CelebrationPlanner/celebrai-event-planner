@@ -25,9 +25,12 @@ SUPABASE_ANON_KEY=
 RATE_LIMIT_WINDOW_MS=60000
 API_RATE_LIMIT_MAX_REQUESTS=120
 
+AI_PROVIDER=gemini
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-flash-latest
-AI_TIMEOUT_MS=30000
+ANTHROPIC_API_KEY=
+CLAUDE_MODEL=claude-opus-5-5
+AI_TIMEOUT_MS=45000
 RATE_LIMIT_MAX_REQUESTS=10
 ```
 
@@ -36,9 +39,12 @@ RATE_LIMIT_MAX_REQUESTS=10
 | `SUPABASE_URL` | Yes | Project URL (local: `http://127.0.0.1:54321`). |
 | `SUPABASE_ANON_KEY` | Yes | Public anon/publishable key. The API forwards each user's access token, so Row Level Security applies to every query (D9). |
 | `RATE_LIMIT_WINDOW_MS` / `API_RATE_LIMIT_MAX_REQUESTS` | No | General API rate limit per client IP (default 120 requests per minute). |
-| `GEMINI_API_KEY` | For AI features | Server-only. Without it the API still runs and AI routes return `503 AI_UNAVAILABLE`. |
+| `AI_PROVIDER` | No | `gemini` (default) or `claude`: which provider writes plan text. Only that provider's key is needed. |
+| `ANTHROPIC_API_KEY` | When `AI_PROVIDER=claude` | Server-only. Blank means not configured (AI routes return 503). |
+| `CLAUDE_MODEL` | No | Claude model id (default `claude-opus-5-5`). |
+| `GEMINI_API_KEY` | When `AI_PROVIDER=gemini` | Server-only. Without it the API still runs and AI routes return `503 AI_UNAVAILABLE`. |
 | `GEMINI_MODEL` | No | Gemini model id or alias (default `gemini-flash-latest`). |
-| `AI_TIMEOUT_MS` | No | Per-call timeout for the AI provider (default 30000). Timeouts return `504 AI_TIMEOUT`. |
+| `AI_TIMEOUT_MS` | No | Overall deadline per AI call, including retries (default 45000, below the client's 60 s). Timeouts return `504 AI_TIMEOUT`. |
 | `RATE_LIMIT_MAX_REQUESTS` | No | Per-user limit for AI routes within `RATE_LIMIT_WINDOW_MS` (default 10). |
 
 **The running API does not use `SUPABASE_SERVICE_ROLE_KEY`.** It is only needed by the integration tests, which read it from `npx supabase status` at runtime (`npm run test:integration -w server`). Never set it on Render.

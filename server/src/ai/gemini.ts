@@ -1,6 +1,23 @@
 import { ApiError, GoogleGenAI } from '@google/genai'
 import { AiError, type AIProvider } from './provider.ts'
 
+// The JSON Schema subset Gemini's responseJsonSchema accepts (see @google/genai typings).
+const SUPPORTED = new Set(['type', 'format', 'title', 'description', 'enum', 'items', 'prefixItems', 'minItems', 'maxItems', 'minimum', 'maximum', 'anyOf', 'oneOf', 'properties', 'additionalProperties', 'required'])
+
+function prune(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(prune)
+  if (node === null || typeof node !== 'object') return node
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(node)) {
+    if (key === 'properties') out[key] = Object.fromEntries(Object.entries(value as object).map(([k, v]) => [k, prune(v)]))
+    else if (SUPPORTED.has(key)) out[key] = prune(value)
+  }
+  return out
+}
+
+/** Standard JSON Schema → the subset Gemini accepts. Dropped keywords are still enforced by Zod afterwards. */
+export const toGeminiSchema = (schema: object) => prune(schema) as object
+
 const isTransient = (err: unknown) => err instanceof ApiError && (err.status === 429 || err.status >= 500)
 
 /** Gemini implementation of AIProvider: JSON mode, bounded output, timeout, one retry on transient errors. */
@@ -14,7 +31,7 @@ export function createGeminiProvider(options: { apiKey: string; model: string; t
       config: {
         systemInstruction: request.system,
         responseMimeType: 'application/json',
-        responseJsonSchema: request.schema,
+        responseJsonSchema: toGeminiSchema(request.schema),
         maxOutputTokens: request.maxOutputTokens,
         temperature: 0.7,
         abortSignal: AbortSignal.timeout(options.timeoutMs),

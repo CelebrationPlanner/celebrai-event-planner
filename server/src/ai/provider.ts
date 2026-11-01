@@ -23,6 +23,6 @@ export class AiError extends Error {
 export const unconfiguredProvider: AIProvider = {
   name: 'none',
   generateJson: async () => {
-    throw new AiError('unavailable', 'No AI provider is configured (GEMINI_API_KEY is not set).')
+    throw new AiError('unavailable', 'No API key is configured for the selected AI provider.')
   },
 }

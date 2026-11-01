@@ -23,7 +23,8 @@ export default defineConfig({
       command: 'npm run dev -w server',
       cwd: '..',
       url: `${API}/api/health`,
-      env: { PORT: '5055', CLIENT_URL: CLIENT, GEMINI_API_KEY: '' },
+      // No AI keys: tests never make billed AI calls, and AI actions must fail gracefully.
+      env: { PORT: '5055', CLIENT_URL: CLIENT, GEMINI_API_KEY: '', ANTHROPIC_API_KEY: '' },
       reuseExistingServer: false,
       timeout: 60_000,
     },
