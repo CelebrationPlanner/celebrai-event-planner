@@ -21,14 +21,22 @@ CLIENT_URL=http://localhost:5173
 
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-
-GEMINI_API_KEY=
-GEMINI_MODEL=
 
 RATE_LIMIT_WINDOW_MS=60000
-RATE_LIMIT_MAX_REQUESTS=10
+API_RATE_LIMIT_MAX_REQUESTS=120
+
+# Added in Phase 4 (AI):
+GEMINI_API_KEY=
+GEMINI_MODEL=
 ```
+
+| Variable | Required | Notes |
+|---|---|---|
+| `SUPABASE_URL` | Yes | Project URL (local: `http://127.0.0.1:54321`). |
+| `SUPABASE_ANON_KEY` | Yes | Public anon/publishable key. The API forwards each user's access token, so Row Level Security applies to every query (D9). |
+| `RATE_LIMIT_WINDOW_MS` / `API_RATE_LIMIT_MAX_REQUESTS` | No | General API rate limit per client IP (default 120 requests per minute). |
+
+**The running API does not use `SUPABASE_SERVICE_ROLE_KEY`.** It is only needed by the integration tests, which read it from `npx supabase status` at runtime (`npm run test:integration -w server`). Never set it on Render.
 
 ## Rules
 

@@ -49,14 +49,15 @@ CLIENT_URL=https://YOUR-FRONTEND.vercel.app
 
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
 
 GEMINI_API_KEY=
 GEMINI_MODEL=
 
 RATE_LIMIT_WINDOW_MS=60000
-RATE_LIMIT_MAX_REQUESTS=10
+API_RATE_LIMIT_MAX_REQUESTS=120
 ```
+
+Do not set `SUPABASE_SERVICE_ROLE_KEY` on Render: the API runs every query as the signed-in user (see ARCHITECTURE.md D9).
 
 Use the port supplied by the hosting platform if required. Never commit these values.
 

@@ -1,15 +1,59 @@
 import cors from 'cors'
-import express from 'express'
+import express, { type RequestHandler } from 'express'
+import { rateLimit } from 'express-rate-limit'
+import helmet from 'helmet'
+import { randomUUID } from 'node:crypto'
 import type { Env } from './config/env.ts'
+import { AppError } from './lib/errors.ts'
+import { requireAuth } from './middleware/auth.ts'
+import { errorHandler, notFoundRoute } from './middleware/errorHandler.ts'
+import { budgetRouter } from './modules/budget.ts'
+import { eventsRouter } from './modules/events.ts'
+import { profileRouter } from './modules/profile.ts'
+import { tasksRouter } from './modules/tasks.ts'
+
+/** Request id + one safe log line per request: method, path (no query), status, duration. */
+function requestLog(enabled: boolean): RequestHandler {
+  return (req, res, next) => {
+    const id = randomUUID()
+    const start = performance.now()
+    res.setHeader('x-request-id', id)
+    if (enabled) res.on('finish', () => console.log(`[${id}] ${req.method} ${req.path} ${res.statusCode} ${Math.round(performance.now() - start)}ms`))
+    next()
+  }
+}
 
 export function createApp(env: Env) {
   const app = express()
   app.disable('x-powered-by')
+  app.set('trust proxy', 1) // Render terminates TLS in front of the app; needed for per-client rate limits.
+
+  app.use(requestLog(env.NODE_ENV !== 'test'))
+  app.use(helmet())
   app.use(cors({ origin: env.CLIENT_URL }))
+  app.use(express.json({ limit: '100kb' }))
 
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' })
   })
 
+  app.use(
+    '/api',
+    rateLimit({
+      windowMs: env.RATE_LIMIT_WINDOW_MS,
+      limit: env.API_RATE_LIMIT_MAX_REQUESTS,
+      standardHeaders: 'draft-8',
+      legacyHeaders: false,
+      handler: (_req, _res, next) => next(new AppError(429, 'RATE_LIMITED', 'Too many requests. Please wait a moment and try again.')),
+    }),
+    requireAuth(env),
+    eventsRouter,
+    tasksRouter,
+    budgetRouter,
+    profileRouter,
+  )
+
+  app.use(notFoundRoute)
+  app.use(errorHandler)
   return app
 }
