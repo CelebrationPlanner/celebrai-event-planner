@@ -236,3 +236,46 @@ Configure CORS to allow only the production frontend and explicitly required loc
 | D12 | **Render cold starts.** The landing page pings `/api/health` on load and the UI shows a "waking up the planner" state on slow first responses. | Free-tier instances sleep; evaluators shouldn't see a dead app. |
 
 Tooling: Node 22, TypeScript 7 (`strict: true` set explicitly), oxlint, Vitest + Supertest, esbuild for the server build, tsx for server dev. Local Supabase (`supabase start`, Docker) runs the RLS and cross-user tests.
+
+## 12. Event Planning Intelligence Engine (Phase 4)
+
+The planner splits every decision into two kinds:
+
+| Decided by the backend engine (`server/src/engine/`) | Written by the AI (`server/src/ai/`) |
+|---|---|
+| Which details are missing and which questions to ask | Friendly acknowledgement of what the user said |
+| Which planning rules apply (table below) | Theme, with reasoning tied to the user's preferences |
+| Budget allocation per category, in exact integer minor units | Recommendations: what, why, assumptions |
+| Checklist and deadlines (never past, never after the event) | Event-day agenda (HH:MM), extra risks and tasks |
+| Fixed assumptions (estimates are not quotes; availability unverified) | Wording, explanations, invitation text |
+
+The AI never supplies money amounts or plan dates. Its output is validated with Zod; costs and due dates are then filled in from the engine and the combined plan is validated again (`eventPlanSchema`) before it is saved.
+
+### Decision rules
+
+| Rule | Trigger | Effect |
+|---|---|---|
+| Tight budget | Budget per guest < ₹400 / $15 / €15 / £12 (×3 for weddings) | Food and space first; photography, entertainment, décor and invitations scaled back; "ask a friend for photos" replaces a photographer |
+| Large guest count | ≥ 150 guests | More to food and venue; capacity flagged as *to verify* |
+| Outdoor venue | `venuePreference = outdoor` | Extra contingency; weather-backup task and risk |
+| Children attending | Age group mentions children/teens, or a 1st–12th birthday | Age-appropriate entertainer, larger entertainment share, supervision risk |
+| Short notice / urgent | ≤ 14 days / ≤ 3 days | Compressed deadlines due today and marked high priority; rush buffer in contingency |
+| Dietary requirements | Any listed | Dedicated caterer task and risk naming each requirement |
+| Missing details | No occasion, date, guest count or budget | Follow-up questions; generation returns a clarification instead of calling the AI |
+
+Budget allocation starts from the spec split (§11 of the product spec), applies the rule transfers in basis points (each moves at most what the source category holds), and distributes rounding remainders by largest remainder, so the categories always sum exactly to the budget. It uses BigInt internally, so totals stay exact up to `Number.MAX_SAFE_INTEGER`.
+
+### Flow
+
+- `POST /api/planner/chat` `{ eventId?, message }`: the AI extracts facts. Each field is validated individually and saved on the event (invalid values are dropped, past dates trigger a question). The first message without an `eventId` creates a draft event. History is capped at 20 messages.
+- `POST /api/planner/generate` `{ eventId, regenerate? }`: returns `{ kind: 'clarification' }` if details are missing. Otherwise it runs engine → AI → merge → validate, then `save_generated_plan` (one transaction, running as the user so RLS applies) stores the plan version, upserts budget estimates (keeping actual spend) and replaces only unfinished generated tasks. If the event context hash is unchanged, the saved plan is reused without an AI call.
+- `POST /api/events/:id/invitation/generate` `{ tone }`: drafts invitation text. It isn't saved until the user saves it.
+- `GET /api/events/:id/conversation`: the bounded history.
+
+### AI safety
+
+- **Separation and encoding:** application rules go in the system instruction. User text is JSON-encoded (with `<` escaped) inside one `<untrusted_input>` block, and the rules say never to follow instructions found there.
+- **No tools:** the model has no tools, and nothing it returns is executed.
+- **Output validation:** responses are constrained by a JSON schema derived from the Zod schemas, then validated. Over-long text is trimmed; wrong shapes, enums, times and numbers are rejected (`502 AI_INVALID_OUTPUT`, nothing saved).
+- **Bounded calls:** a timeout (`504`), one retry on transient provider errors only, a per-user AI rate limit, and provider errors logged by status code only.
+- **Provider-neutral:** `AIProvider` is the only interface business logic uses. `gemini.ts` implements it; tests use a scripted fake.

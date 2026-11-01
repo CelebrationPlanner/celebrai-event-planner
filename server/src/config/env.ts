@@ -9,6 +9,12 @@ const envSchema = z.object({
   SUPABASE_ANON_KEY: z.string().min(20),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   API_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(120),
+  // AI routes: stricter per-user limit, since each call costs money and time.
+  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(10),
+  // Optional: without a key the API runs and AI routes answer 503.
+  GEMINI_API_KEY: z.string().min(1).optional(),
+  GEMINI_MODEL: z.string().min(1).default('gemini-flash-latest'),
+  AI_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
 })
 
 export type Env = z.infer<typeof envSchema>

@@ -8,7 +8,7 @@ import { assertNotPast, loadOwnedEvent, parseId, userToday } from './ownership.t
 
 type EventPatch = Database['public']['Tables']['events']['Update']
 
-const toColumns = (e: EventUpdate): EventPatch => ({
+export const toColumns = (e: EventUpdate): EventPatch => ({
   status: e.status,
   occasion: e.occasion,
   event_name: e.eventName,

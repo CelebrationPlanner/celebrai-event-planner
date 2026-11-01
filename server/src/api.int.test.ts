@@ -1,43 +1,15 @@
 // Integration tests against a real local Supabase (Postgres + Auth + RLS) with two real users.
 // Run with `npm run test:integration -w server` after `npx supabase start`.
 import { addDays, todayInTimeZone } from '@celebrai/shared'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 import request from 'supertest'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createApp } from './app.ts'
-import { loadEnv } from './config/env.ts'
-import type { Database } from './db/database.types.ts'
+import { admin, client, deleteUsers, makeUser, noSession, SUPABASE_ANON_KEY, SUPABASE_URL, testEnv, type TestUser } from './test/integration.ts'
 
-const { SUPABASE_URL = '', SUPABASE_ANON_KEY = '', SUPABASE_SERVICE_ROLE_KEY = '' } = process.env
-const noSession = { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
-const app = createApp(loadEnv({ NODE_ENV: 'test', CLIENT_URL: 'http://localhost:5173', SUPABASE_URL, SUPABASE_ANON_KEY, API_RATE_LIMIT_MAX_REQUESTS: '10000' }))
-const admin = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: noSession })
+const app = createApp(testEnv())
 const today = todayInTimeZone('Asia/Kolkata')
-
-interface TestUser {
-  id: string
-  token: string
-  db: SupabaseClient<Database>
-}
-
-async function makeUser(label: string): Promise<TestUser> {
-  const email = `${label}-${crypto.randomUUID()}@celebrai.test`
-  const password = `pw-${crypto.randomUUID()}`
-  const created = await admin.auth.admin.createUser({ email, password, email_confirm: true })
-  if (created.error) throw created.error
-  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: noSession })
-  const { data, error } = await client.auth.signInWithPassword({ email, password })
-  if (error || !data.session) throw error ?? new Error('no session')
-  const db = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: noSession, global: { headers: { Authorization: `Bearer ${data.session.access_token}` } } })
-  return { id: data.user.id, token: data.session.access_token, db }
-}
-
-const api = (user: TestUser) => ({
-  get: (path: string) => request(app).get(`/api${path}`).set('Authorization', `Bearer ${user.token}`),
-  post: (path: string, body: object) => request(app).post(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
-  patch: (path: string, body: object) => request(app).patch(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
-  delete: (path: string) => request(app).delete(`/api${path}`).set('Authorization', `Bearer ${user.token}`),
-})
+const api = (user: TestUser) => client(app, user)
 
 let alice: TestUser
 let bob: TestUser
@@ -59,10 +31,7 @@ beforeAll(async () => {
   aliceTaskId = (await api(alice).post(`/events/${aliceEventId}/tasks`, { title: 'Book venue', priority: 'high', dueDate: addDays(today, 2) })).body.data.id
 })
 
-afterAll(async () => {
-  // Deleting the users cascades to every row they own.
-  await Promise.all([alice, bob].filter(Boolean).map((u) => admin.auth.admin.deleteUser(u.id)))
-})
+afterAll(() => deleteUsers([alice, bob]))
 
 describe('authentication', () => {
   it('creates a profile for every new user (trigger)', async () => {

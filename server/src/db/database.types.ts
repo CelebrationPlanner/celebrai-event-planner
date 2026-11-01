@@ -113,14 +113,14 @@ isOneToOne: false
                   ]
                 },"tasks": {
                   Row: {
-                    "completed": boolean,"created_at": string,"due_date": string | null,"event_id": string,"id": string,"kind": string,"priority": string,"title": string,"updated_at": string,"user_id": string
+                    "completed": boolean,"created_at": string,"due_date": string | null,"event_id": string,"generated": boolean,"id": string,"kind": string,"priority": string,"title": string,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "completed"?: boolean,"created_at"?: string,"due_date"?: string | null,"event_id": string,"id"?: string,"kind"?: string,"priority"?: string,"title": string,"updated_at"?: string,"user_id"?: string
+                    "completed"?: boolean,"created_at"?: string,"due_date"?: string | null,"event_id": string,"generated"?: boolean,"id"?: string,"kind"?: string,"priority"?: string,"title": string,"updated_at"?: string,"user_id"?: string
                   }
                   Update: {
-                    "completed"?: boolean,"created_at"?: string,"due_date"?: string | null,"event_id"?: string,"id"?: string,"kind"?: string,"priority"?: string,"title"?: string,"updated_at"?: string,"user_id"?: string
+                    "completed"?: boolean,"created_at"?: string,"due_date"?: string | null,"event_id"?: string,"generated"?: boolean,"id"?: string,"kind"?: string,"priority"?: string,"title"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -137,7 +137,9 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "save_generated_plan":
+{ Args: { "p_event_id": string,"p_expenses": Json,"p_plan": Json,"p_tasks": Json }; Returns: number
+                           }
           }
           Enums: {
             [_ in never]: never

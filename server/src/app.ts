@@ -3,12 +3,15 @@ import express, { type RequestHandler } from 'express'
 import { rateLimit } from 'express-rate-limit'
 import helmet from 'helmet'
 import { randomUUID } from 'node:crypto'
+import { createGeminiProvider } from './ai/gemini.ts'
+import { unconfiguredProvider, type AIProvider } from './ai/provider.ts'
 import type { Env } from './config/env.ts'
 import { AppError } from './lib/errors.ts'
 import { requireAuth } from './middleware/auth.ts'
 import { errorHandler, notFoundRoute } from './middleware/errorHandler.ts'
 import { budgetRouter } from './modules/budget.ts'
 import { eventsRouter } from './modules/events.ts'
+import { createPlannerRouter } from './modules/planner.ts'
 import { profileRouter } from './modules/profile.ts'
 import { tasksRouter } from './modules/tasks.ts'
 
@@ -23,7 +26,21 @@ function requestLog(enabled: boolean): RequestHandler {
   }
 }
 
-export function createApp(env: Env) {
+const rateLimited = () => new AppError(429, 'RATE_LIMITED', 'Too many requests. Please wait a moment and try again.')
+
+export function createApp(env: Env, deps: { ai?: AIProvider } = {}) {
+  const ai =
+    deps.ai ?? (env.GEMINI_API_KEY ? createGeminiProvider({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL, timeoutMs: env.AI_TIMEOUT_MS }) : unconfiguredProvider)
+  // Per user (not per IP), applied after authentication on AI routes only.
+  const aiLimiter = rateLimit({
+    windowMs: env.RATE_LIMIT_WINDOW_MS,
+    limit: env.RATE_LIMIT_MAX_REQUESTS,
+    keyGenerator: (req) => req.auth!.userId,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    handler: (_req, _res, next) => next(rateLimited()),
+  })
+
   const app = express()
   app.disable('x-powered-by')
   app.set('trust proxy', 1) // Render terminates TLS in front of the app; needed for per-client rate limits.
@@ -44,13 +61,14 @@ export function createApp(env: Env) {
       limit: env.API_RATE_LIMIT_MAX_REQUESTS,
       standardHeaders: 'draft-8',
       legacyHeaders: false,
-      handler: (_req, _res, next) => next(new AppError(429, 'RATE_LIMITED', 'Too many requests. Please wait a moment and try again.')),
+      handler: (_req, _res, next) => next(rateLimited()),
     }),
     requireAuth(env),
     eventsRouter,
     tasksRouter,
     budgetRouter,
     profileRouter,
+    createPlannerRouter(ai, aiLimiter),
   )
 
   app.use(notFoundRoute)
