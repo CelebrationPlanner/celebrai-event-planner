@@ -41,15 +41,27 @@ const rateLimited = () => new AppError(429, 'RATE_LIMITED', 'Too many requests. 
 
 export function createApp(env: Env, deps: { ai?: AIProvider } = {}) {
   const ai = deps.ai ?? selectProvider(env)
-  // Per user (not per IP), applied after authentication on AI routes only.
-  const aiLimiter = rateLimit({
-    windowMs: env.RATE_LIMIT_WINDOW_MS,
-    limit: env.RATE_LIMIT_MAX_REQUESTS,
-    keyGenerator: (req) => req.auth!.userId,
-    standardHeaders: 'draft-8',
-    legacyHeaders: false,
-    handler: (_req, _res, next) => next(rateLimited()),
-  })
+  // AI spend guards, applied after authentication on AI routes only, in this order. Anonymous
+  // demo users are free to create, so per-user limits alone are not enough.
+  // ponytail: in-memory counters (single instance; reset on restart). Move to a shared store if scaled out.
+  const limiter = (options: Parameters<typeof rateLimit>[0]) => rateLimit({ standardHeaders: 'draft-8', legacyHeaders: false, handler: (_req, _res, next) => next(rateLimited()), ...options })
+  const DAY_MS = 86_400_000
+  const aiGuards = [
+    limiter({ windowMs: env.RATE_LIMIT_WINDOW_MS, limit: env.RATE_LIMIT_MAX_REQUESTS, keyGenerator: (req) => req.auth!.userId }),
+    limiter({ windowMs: env.RATE_LIMIT_WINDOW_MS, limit: env.AI_RATE_LIMIT_PER_IP }), // per client IP
+    limiter({
+      windowMs: DAY_MS,
+      limit: (req) => (req.auth!.isAnonymous ? env.AI_DAILY_LIMIT_ANONYMOUS : env.AI_DAILY_LIMIT_PER_USER),
+      keyGenerator: (req) => req.auth!.userId,
+      handler: (_req, _res, next) => next(new AppError(429, 'RATE_LIMITED', 'You have reached today’s AI planning limit. Please try again tomorrow.')),
+    }),
+    limiter({
+      windowMs: DAY_MS,
+      limit: env.AI_DAILY_LIMIT_TOTAL,
+      keyGenerator: () => 'all-users',
+      handler: (_req, _res, next) => next(new AppError(503, 'AI_UNAVAILABLE', 'The AI planner has reached today’s capacity. Please try again tomorrow.')),
+    }),
+  ]
 
   const app = express()
   app.disable('x-powered-by')
@@ -81,7 +93,7 @@ export function createApp(env: Env, deps: { ai?: AIProvider } = {}) {
     dashboardRouter,
     demoRouter,
     suggestionsRouter,
-    createPlannerRouter(ai, aiLimiter),
+    createPlannerRouter(ai, aiGuards),
   )
 
   app.use(notFoundRoute)

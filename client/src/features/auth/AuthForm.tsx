@@ -20,8 +20,11 @@ const signupSchema = loginSchema.extend({ name: z.string().trim().min(1, 'Enter 
 
 type Errors = Partial<Record<'name' | 'email' | 'password' | 'form', string>>
 
-/** Only same-app paths are allowed as a post-login destination (no open redirects). */
-const safeNext = (next: string | null) => (next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard')
+/**
+ * Only same-app paths are allowed as a post-login destination (no open redirects). Browsers
+ * treat a backslash like a slash and strip tabs/newlines, so those tricks are rejected too.
+ */
+export const safeNext = (next: string | null) => (next && /^\/(?![\\/])[^\\\t\n\r]*$/.test(next) ? next : '/dashboard')
 
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const [errors, setErrors] = useState<Errors>({})

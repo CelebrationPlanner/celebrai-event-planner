@@ -1,4 +1,4 @@
-import { todayInTimeZone } from '@celebrai/shared'
+import { isValidTimeZone, todayInTimeZone } from '@celebrai/shared'
 import { z } from 'zod'
 import type { Db } from '../middleware/auth.ts'
 import { invalid, notFound, unwrapMaybe } from '../lib/errors.ts'
@@ -25,7 +25,9 @@ export async function loadOwnedEvent(db: Db, userId: string, eventId: string) {
 /** "Today" in the caller's profile time zone (D8), for past-date checks. */
 export async function userToday(db: Db, userId: string): Promise<string> {
   const profile = unwrapMaybe(await db.from('profiles').select('time_zone').eq('id', userId).maybeSingle())
-  return todayInTimeZone(profile?.time_zone ?? 'Asia/Kolkata')
+  // The profile can be edited directly through the Data API, so never trust the stored zone blindly.
+  const zone = profile?.time_zone && isValidTimeZone(profile.time_zone) ? profile.time_zone : 'Asia/Kolkata'
+  return todayInTimeZone(zone)
 }
 
 export function assertNotPast(date: string | null | undefined, today: string, path: string) {

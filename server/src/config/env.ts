@@ -11,6 +11,12 @@ const envSchema = z.object({
   API_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(120),
   // AI routes: stricter per-user limit, since each call costs money and time.
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(10),
+  // AI spend guards (each AI call is billed). Per IP per window, so minting anonymous users can't
+  // multiply the per-user limit; daily quotas per user (lower for anonymous demo users) and in total.
+  AI_RATE_LIMIT_PER_IP: z.coerce.number().int().positive().default(20),
+  AI_DAILY_LIMIT_PER_USER: z.coerce.number().int().positive().default(50),
+  AI_DAILY_LIMIT_ANONYMOUS: z.coerce.number().int().positive().default(10),
+  AI_DAILY_LIMIT_TOTAL: z.coerce.number().int().positive().default(1000),
   // Which AI provider writes plan text. Without its key the API still runs and AI routes answer 503.
   AI_PROVIDER: z.enum(['gemini', 'claude']).default('gemini'),
   ANTHROPIC_API_KEY: z

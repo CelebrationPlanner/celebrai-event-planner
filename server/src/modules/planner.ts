@@ -43,7 +43,7 @@ async function loadHistory(db: Db, userId: string, eventId: string): Promise<Cha
 /** Fingerprint of everything that shapes a plan; unchanged context means no new AI call. */
 export const contextHash = (e: CelebrationEvent) => createHash('sha256').update(JSON.stringify({ ...contextOf(e), currency: e.currency, budgetMinor: e.budgetMinor })).digest('hex')
 
-export function createPlannerRouter(ai: AIProvider, aiLimiter: RequestHandler) {
+export function createPlannerRouter(ai: AIProvider, aiGuards: RequestHandler[]) {
   const router = Router()
 
   router.get('/events/:id/conversation', async (req, res) => {
@@ -58,7 +58,7 @@ export function createPlannerRouter(ai: AIProvider, aiLimiter: RequestHandler) {
    * event (D6), then asks for whatever is still missing — so it never re-asks for known details.
    * Without an eventId, the first message starts a draft event (D5).
    */
-  router.post('/planner/chat', aiLimiter, async (req, res) => {
+  router.post('/planner/chat', ...aiGuards, async (req, res) => {
     const { db, userId } = getAuth(req)
     const { eventId, message } = chatRequestSchema.parse(req.body)
     const today = await userToday(db, userId)
@@ -102,7 +102,7 @@ export function createPlannerRouter(ai: AIProvider, aiLimiter: RequestHandler) {
    * Generates (or reuses) a plan. Missing critical details return a clarification without
    * calling the model (Scenario 7). Engine decides numbers and dates; the model writes the words.
    */
-  router.post('/planner/generate', aiLimiter, async (req, res) => {
+  router.post('/planner/generate', ...aiGuards, async (req, res) => {
     const { db, userId } = getAuth(req)
     const { eventId, regenerate } = generatePlanSchema.parse(req.body)
     const event = toEvent(await loadOwnedEvent(db, userId, eventId))
@@ -137,7 +137,7 @@ export function createPlannerRouter(ai: AIProvider, aiLimiter: RequestHandler) {
   })
 
   /** Drafts invitation text in the chosen tone. Not saved until the user edits/saves it. */
-  router.post('/events/:id/invitation/generate', aiLimiter, async (req, res) => {
+  router.post('/events/:id/invitation/generate', ...aiGuards, async (req, res) => {
     const { db, userId } = getAuth(req)
     const { tone } = invitationGenerateSchema.parse(req.body)
     const event = toEvent(await loadOwnedEvent(db, userId, parseId(req.params.id)))
