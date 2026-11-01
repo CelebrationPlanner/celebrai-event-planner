@@ -1,0 +1,24 @@
+{
+  "name": "celebrai-event-planner",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:client": "npm run dev -w client",
+    "dev:server": "npm run dev -w server",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "oxlint client/src server/src"
+  },
+  "devDependencies": {
+    "oxlint": "^1.90.0",
+    "typescript": "~7.0.2"
+  }
+}
