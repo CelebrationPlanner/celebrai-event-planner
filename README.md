@@ -4,8 +4,8 @@
 
 CelebrAI turns a sentence like *"My daughter's 5th birthday in Pune for 40 guests, ₹25,000, she loves princesses, in 12 days"* into a complete, editable plan: theme, budget split, prioritised checklist, timeline, event-day schedule, risks and an invitation — and explains **why** it recommends each thing.
 
-- **Live app:** _added after deployment_
-- **API health:** _added after deployment_
+- **Live app:** https://celebrai-planner.netlify.app
+- **API health:** https://celebrai-api-jd3j.onrender.com/api/health (free tier: the first request after idle can take ~50 s)
 - **Try it without an account:** press **Explore the demo** on the landing page (an isolated, temporary account with a sample event).
 
 ---
