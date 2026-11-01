@@ -10,6 +10,8 @@ import { AppError } from './lib/errors.ts'
 import { requireAuth } from './middleware/auth.ts'
 import { errorHandler, notFoundRoute } from './middleware/errorHandler.ts'
 import { budgetRouter } from './modules/budget.ts'
+import { dashboardRouter } from './modules/dashboard.ts'
+import { demoRouter } from './modules/demo.ts'
 import { eventsRouter } from './modules/events.ts'
 import { createPlannerRouter } from './modules/planner.ts'
 import { profileRouter } from './modules/profile.ts'
@@ -68,6 +70,8 @@ export function createApp(env: Env, deps: { ai?: AIProvider } = {}) {
     tasksRouter,
     budgetRouter,
     profileRouter,
+    dashboardRouter,
+    demoRouter,
     createPlannerRouter(ai, aiLimiter),
   )
 

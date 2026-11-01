@@ -1,7 +1,7 @@
-// Event dates are date-only ISO strings (YYYY-MM-DD). Arithmetic runs in UTC so
-// the browser's DST/time zone never shifts a date by a day.
+// Display helpers for date-only ISO strings (YYYY-MM-DD). Date arithmetic lives in @celebrai/shared.
+import { daysBetween } from '@celebrai/shared'
 
-const DAY_MS = 86_400_000
+export { addDays, daysBetween } from '@celebrai/shared'
 
 export function todayISO(now: Date = new Date()): string {
   const y = now.getFullYear()
@@ -13,14 +13,6 @@ export function todayISO(now: Date = new Date()): string {
 function toUTC(iso: string): number {
   const [y, m, d] = iso.split('-').map(Number)
   return Date.UTC(y, m - 1, d)
-}
-
-export function addDays(iso: string, days: number): string {
-  return new Date(toUTC(iso) + days * DAY_MS).toISOString().slice(0, 10)
-}
-
-export function daysBetween(fromISO: string, toISO: string): number {
-  return Math.round((toUTC(toISO) - toUTC(fromISO)) / DAY_MS)
 }
 
 export function formatDate(iso: string, options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }): string {

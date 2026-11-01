@@ -11,6 +11,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['./src/test/setup.ts'],
     // Full-app flows (lazy routes + many user events) can exceed the 5s default on a busy machine.
     testTimeout: 15_000,

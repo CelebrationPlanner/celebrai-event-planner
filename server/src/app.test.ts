@@ -85,6 +85,11 @@ describe('loadEnv', () => {
     expect(run).not.toThrow(/secret-not-a-port/)
   })
 
+  it('treats a blank GEMINI_API_KEY (as in .env.example) as not configured', () => {
+    expect(loadEnv({ ...baseEnv, GEMINI_API_KEY: '' }).GEMINI_API_KEY).toBeUndefined()
+    expect(loadEnv({ ...baseEnv, GEMINI_API_KEY: '  ' }).GEMINI_API_KEY).toBeUndefined()
+  })
+
   it('applies defaults', () => {
     expect(loadEnv(baseEnv)).toMatchObject({ NODE_ENV: 'test', PORT: 5000, RATE_LIMIT_WINDOW_MS: 60_000, API_RATE_LIMIT_MAX_REQUESTS: 120 })
   })

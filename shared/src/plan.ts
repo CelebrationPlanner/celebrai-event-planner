@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { BUDGET_CATEGORIES, INVITATION_TONES, isoDateSchema, minorSchema, PRIORITIES, TASK_KINDS } from './schemas.ts'
+import { BUDGET_CATEGORIES, INVITATION_TONES, isoDateSchema, minorSchema, PRIORITIES, TASK_KINDS, type CelebrationEvent } from './schemas.ts'
 
 const line = (max: number) => z.string().trim().min(1).max(max)
 export const timeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use 24-hour HH:MM.')
@@ -50,4 +50,19 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   at: string
+}
+
+export interface MissingDetail {
+  field: 'occasion' | 'eventDate' | 'guestCount' | 'budgetMinor'
+  question: string
+}
+
+/** Critical details, in the order the assistant should ask for them. */
+export function missingDetails(event: CelebrationEvent): MissingDetail[] {
+  const missing: MissingDetail[] = []
+  if (!event.occasion) missing.push({ field: 'occasion', question: 'What are you celebrating — a birthday, wedding, anniversary or something else?' })
+  if (!event.eventDate) missing.push({ field: 'eventDate', question: 'What date is the event? I need it to build a realistic schedule.' })
+  if (!event.guestCount) missing.push({ field: 'guestCount', question: 'Roughly how many guests are you expecting?' })
+  if (!event.budgetMinor) missing.push({ field: 'budgetMinor', question: 'What’s your total budget?' })
+  return missing
 }

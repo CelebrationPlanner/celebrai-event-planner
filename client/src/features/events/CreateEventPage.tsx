@@ -1,4 +1,5 @@
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { ArrowLeft, ArrowRight, Check, LoaderCircle } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
@@ -8,18 +9,22 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { useDemoStore } from '@/demo/DemoStore'
+import { api, errorMessage, fieldErrors } from '@/lib/api'
 import { formatDate, todayISO } from '@/lib/dates'
 import { formatMoney, parseMoney } from '@/lib/money'
-import { CURRENCIES, OCCASIONS, type CurrencyCode, type Occasion, type VenuePreference } from '@/types'
+import { useRefreshEvent } from '@/lib/queries'
+import { CURRENCIES, OCCASIONS, type CelebrationEvent, type CurrencyCode, type Occasion } from '@/types'
 import { AGE_GROUPS, DIETARY_OPTIONS, emptyEventForm, validateStep, type EventFormValues, type FormErrors } from './eventForm'
 
 const STEPS = ['The basics', 'Guests & budget', 'Preferences', 'Review']
+// Which step shows each field, so a server-side validation error can take the user back to it.
+const FIELD_STEP: Record<string, number> = { occasion: 0, eventName: 0, eventDate: 0, location: 0, guestCount: 1, budget: 1, currency: 1, venuePreference: 1 }
 
 export default function CreateEventPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const { actions } = useDemoStore()
+  const refresh = useRefreshEvent()
+  const create = useMutation({ mutationFn: api.createEvent })
   const today = todayISO()
   const initialOccasion = OCCASIONS.some((o) => o.value === params.get('occasion')) ? params.get('occasion')! : ''
 
@@ -39,7 +44,8 @@ export default function CreateEventPage() {
       if (Object.keys(stepErrors).length === 0) setStep(step + 1)
       return
     }
-    const event = actions.createEvent({
+    create.mutate(
+      {
       occasion: values.occasion as Occasion,
       eventName: values.eventName.trim(),
       eventDate: values.eventDate || null,
@@ -47,14 +53,29 @@ export default function CreateEventPage() {
       guestCount: Number(values.guestCount),
       budgetMinor: parseMoney(values.budget)!,
       currency: values.currency as CurrencyCode,
-      venuePreference: values.venuePreference as VenuePreference,
+      venuePreference: values.venuePreference as CelebrationEvent['venuePreference'],
       themePreferences: values.themePreferences.split(',').map((t) => t.trim()).filter(Boolean),
       ageGroup: values.ageGroup,
       dietaryRequirements: values.dietaryRequirements,
       additionalInstructions: values.additionalInstructions.trim(),
-    })
-    toast.success('Event created', { description: 'Next, let the assistant build your plan.' })
-    navigate(`/events/${event.id}`)
+      },
+      {
+        onSuccess: (event) => {
+          refresh(event.id)
+          toast.success('Event created', { description: 'Next, let the assistant build your plan.' })
+          navigate(`/events/${event.id}`)
+        },
+        onError: (err) => {
+          const server = fieldErrors(err)
+          const mapped: FormErrors = Object.fromEntries(Object.entries(server).map(([k, v]) => [k === 'budgetMinor' ? 'budget' : k, v]))
+          const first = Object.keys(mapped).map((k) => FIELD_STEP[k]).filter((n) => n !== undefined)
+          if (first.length) {
+            setErrors(mapped)
+            setStep(Math.min(...first))
+          } else toast.error(errorMessage(err))
+        },
+      },
+    )
   }
 
   const occasionLabel = OCCASIONS.find((o) => o.value === values.occasion)?.label
@@ -200,10 +221,10 @@ export default function CreateEventPage() {
             <Button type="button" variant="outline" onClick={() => setStep(step - 1)} disabled={step === 0}>
               <ArrowLeft aria-hidden="true" /> Back
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={create.isPending}>
               {step === STEPS.length - 1 ? (
                 <>
-                  <Check aria-hidden="true" /> Create event
+                  {create.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Check aria-hidden="true" />} Create event
                 </>
               ) : (
                 <>

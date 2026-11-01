@@ -84,7 +84,7 @@ Start the local database and auth stack (requires Docker). This applies `supabas
 npx supabase start
 ```
 
-Create `client/.env` and `server/.env` from the corresponding `.env.example` files, using the URL and anon key printed by `npx supabase status`. Never commit real credentials.
+Create `client/.env` and `server/.env` from the corresponding `.env.example` files, using the URL and anon key printed by `npx supabase status`. `GEMINI_API_KEY` can stay blank: the app runs, and AI actions explain that the planner is unavailable. Never commit real credentials.
 
 Run the backend and frontend in separate terminals:
 
@@ -99,6 +99,12 @@ Database integration tests (two real users, RLS and cross-user access) run again
 
 ```bash
 npm run test:integration -w server
+```
+
+End-to-end tests (Playwright + axe in a real browser) start their own API and client against the local stack:
+
+```bash
+npm run test:e2e -w client
 ```
 
 After changing a migration, regenerate the typed database client with `npm run db:types -w server`.

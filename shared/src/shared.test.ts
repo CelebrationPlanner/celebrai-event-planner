@@ -17,13 +17,13 @@ describe('summarizeBudget', () => {
     expect(s.budgetMinor).toBe(2_000_000)
     expect(s.overrunMinor).toBe(400_000)
     expect(s.remainingMinor).toBe(0)
-    expect(s.warnings).toContain('Planned allocations exceed the total budget by 400000 minor units.')
+    expect(s.warnings).toContainEqual({ kind: 'overrun', amountMinor: 400_000 })
   })
 
   it('tracks actual spend separately and flags categories above estimate', () => {
     const s = summarizeBudget(1_000_000, [row('food', 100_000, 150_000), row('contingency', 50_000)])
     expect(s.actualMinor).toBe(150_000)
-    expect(s.warnings).toContain('food spending is above its estimate.')
+    expect(s.warnings).toContainEqual({ kind: 'over_estimate', category: 'food' })
   })
 
   it('stays exact at the safe-integer boundary', () => {

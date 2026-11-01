@@ -1,13 +1,14 @@
-import { Copy, Mail, Save, Share2, Sparkles } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { Copy, LoaderCircle, Mail, Save, Share2, Sparkles, TriangleAlert } from 'lucide-react'
 import { useId, useState } from 'react'
 import { toast } from 'sonner'
-import { UnavailableAction } from '@/components/UnavailableAction'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { useDemoStore } from '@/demo/DemoStore'
-import { AI_PENDING_REASON } from '@/lib/pending'
+import { api, errorMessage } from '@/lib/api'
+import { useRefreshEvent } from '@/lib/queries'
 import { INVITATION_TONES, type InvitationTone } from '@/types'
 import { useEvent } from '../events/useEvent'
 
@@ -21,10 +22,26 @@ const TONE_HINT: Record<InvitationTone, string> = {
 
 export default function InvitationPage() {
   const event = useEvent()
-  const { actions } = useDemoStore()
+  const refresh = useRefreshEvent()
   const [text, setText] = useState(event.invitationText)
   const [tone, setTone] = useState<InvitationTone>(event.invitationTone)
   const editorId = useId()
+  const saveMutation = useMutation({
+    mutationFn: () => api.saveInvitation(event.id, text, tone),
+    onSuccess: async () => {
+      await refresh(event.id)
+      toast.success('Invitation saved')
+    },
+    onError: (err) => toast.error(errorMessage(err)),
+  })
+  // Drafts text in the chosen tone; nothing is saved until the user presses Save.
+  const generate = useMutation({
+    mutationFn: () => api.generateInvitation(event.id, tone),
+    onSuccess: (result) => {
+      setText(result.text)
+      toast.success('Draft ready — review it, then save')
+    },
+  })
   const dirty = text !== event.invitationText || tone !== event.invitationTone
 
   async function copy() {
@@ -48,10 +65,6 @@ export default function InvitationPage() {
     }
   }
 
-  function save() {
-    actions.updateEvent(event.id, { invitationText: text, invitationTone: tone })
-    toast.success('Invitation saved')
-  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -74,7 +87,16 @@ export default function InvitationPage() {
               ))}
             </div>
           </fieldset>
-          <UnavailableAction icon={Sparkles} label={`Generate ${tone} invitation`} reason={AI_PENDING_REASON} />
+          <Button variant="secondary" className="self-start" onClick={() => generate.mutate()} disabled={generate.isPending}>
+            {generate.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Sparkles aria-hidden="true" />}
+            {generate.isPending ? 'Writing…' : `Generate ${tone} invitation`}
+          </Button>
+          {generate.error && (
+            <Alert variant="destructive" role="alert">
+              <TriangleAlert aria-hidden="true" />
+              <AlertDescription>{errorMessage(generate.error)}</AlertDescription>
+            </Alert>
+          )}
         </Card>
 
         <Card className="gap-3 p-5">
@@ -93,7 +115,7 @@ export default function InvitationPage() {
             placeholder="Write your invitation here, or generate one once the assistant is connected."
           />
           <div className="flex flex-wrap gap-2">
-            <Button onClick={save} disabled={!dirty}>
+            <Button onClick={() => saveMutation.mutate()} disabled={!dirty || saveMutation.isPending}>
               <Save aria-hidden="true" /> {dirty ? 'Save changes' : 'Saved'}
             </Button>
             <Button variant="outline" onClick={copy} disabled={!text.trim()}>

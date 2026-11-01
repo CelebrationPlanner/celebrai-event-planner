@@ -10,12 +10,35 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
-import { useDemoStore } from '@/demo/DemoStore'
+import { ErrorState, LoadingBlock } from '@/components/QueryStates'
+import { api, errorMessage } from '@/lib/api'
 import { formatDate, todayISO } from '@/lib/dates'
 import { sortTasks, taskProgress } from '@/lib/insights'
+import { useRefreshEvent, useTasks } from '@/lib/queries'
 import type { Priority, Task } from '@/types'
 import { useEvent } from '../events/useEvent'
 import { PRIORITIES, validateTask } from './taskForm'
+
+/** Every change is persisted through the API, then the event's queries refresh. */
+function useTaskActions(eventId: string) {
+  const refresh = useRefreshEvent()
+  const run = async <T,>(work: Promise<T>, success?: string) => {
+    try {
+      const result = await work
+      await refresh(eventId)
+      if (success) toast.success(success)
+      return result
+    } catch (err) {
+      toast.error(errorMessage(err))
+      throw err
+    }
+  }
+  return {
+    add: (input: Pick<Task, 'title' | 'priority' | 'dueDate' | 'kind'>, success?: string) => run(api.createTask(eventId, input), success),
+    update: (taskId: string, patch: Parameters<typeof api.updateTask>[2], success?: string) => run(api.updateTask(eventId, taskId, patch), success),
+    remove: (taskId: string) => run(api.deleteTask(eventId, taskId)),
+  }
+}
 
 const FILTERS = ['all', 'active', 'completed'] as const
 type Filter = (typeof FILTERS)[number]
@@ -56,18 +79,20 @@ function TaskFields({ title, priority, dueDate, error, eventDate, onChange }: {
 }
 
 function EditTaskDialog({ task, eventDate, onClose }: { task: Task; eventDate: string | null; onClose: () => void }) {
-  const { actions } = useDemoStore()
+  const actions = useTaskActions(task.eventId)
+  const [saving, setSaving] = useState(false)
   const [values, setValues] = useState({ title: task.title, priority: task.priority, dueDate: task.dueDate ?? '' })
   const [error, setError] = useState<string>()
 
-  function save(e: FormEvent) {
+  async function save(e: FormEvent) {
     e.preventDefault()
     // Unchanged past due dates on existing tasks stay valid; only new dates are checked.
     const problem = validateTask(values.title, values.dueDate === task.dueDate ? '' : values.dueDate, todayISO(), eventDate)
     if (problem) return setError(problem)
-    actions.updateTask(task.id, { title: values.title.trim(), priority: values.priority, dueDate: values.dueDate || null })
-    toast.success('Task updated')
-    onClose()
+    setSaving(true)
+    await actions
+      .update(task.id, { title: values.title.trim(), priority: values.priority, dueDate: values.dueDate || null }, 'Task updated')
+      .then(onClose, () => setSaving(false))
   }
 
   return (
@@ -81,7 +106,7 @@ function EditTaskDialog({ task, eventDate, onClose }: { task: Task; eventDate: s
           <TaskFields {...values} error={error} eventDate={eventDate} onChange={(patch) => setValues((v) => ({ ...v, ...patch }))} />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -91,31 +116,46 @@ function EditTaskDialog({ task, eventDate, onClose }: { task: Task; eventDate: s
 
 export default function ChecklistPage() {
   const event = useEvent()
-  const { tasks: all, actions } = useDemoStore()
+  const query = useTasks(event.id)
+  const actions = useTaskActions(event.id)
+  const [adding, setAdding] = useState(false)
   const [filter, setFilter] = useState<Filter>('all')
   const [draft, setDraft] = useState({ title: '', priority: 'medium' as Priority, dueDate: '' })
   const [error, setError] = useState<string>()
   const [editing, setEditing] = useState<Task | null>(null)
 
-  const tasks = all.filter((t) => t.eventId === event.id)
+  const tasks = query.data ?? []
   const progress = taskProgress(tasks)
   const visible = sortTasks(tasks).filter((t) => (filter === 'all' ? true : filter === 'active' ? !t.completed : t.completed))
   const today = todayISO()
 
-  function add(e: FormEvent) {
+  async function add(e: FormEvent) {
     e.preventDefault()
     const problem = validateTask(draft.title, draft.dueDate, today, event.eventDate)
     if (problem) return setError(problem)
-    actions.addTask({ eventId: event.id, title: draft.title.trim(), priority: draft.priority, dueDate: draft.dueDate || null, kind: 'preparation' })
-    setDraft({ title: '', priority: 'medium', dueDate: '' })
-    setError(undefined)
-    toast.success('Task added')
+    setAdding(true)
+    try {
+      await actions.add({ title: draft.title.trim(), priority: draft.priority, dueDate: draft.dueDate || null, kind: 'preparation' }, 'Task added')
+      setDraft({ title: '', priority: 'medium', dueDate: '' })
+      setError(undefined)
+    } catch {
+      // toast already shown
+    } finally {
+      setAdding(false)
+    }
   }
 
-  function remove(task: Task) {
-    actions.deleteTask(task.id)
-    toast('Task deleted', { description: task.title, action: { label: 'Undo', onClick: () => actions.restoreTask(task) } })
+  async function remove(task: Task) {
+    await actions.remove(task.id).catch(() => undefined)
+    // Undo re-creates the task with the same details.
+    toast('Task deleted', {
+      description: task.title,
+      action: { label: 'Undo', onClick: () => actions.add({ title: task.title, priority: task.priority, dueDate: task.dueDate, kind: task.kind }, 'Task restored').catch(() => undefined) },
+    })
   }
+
+  if (query.isPending) return <LoadingBlock rows={4} label="Loading checklist" />
+  if (query.error) return <ErrorState error={query.error} onRetry={() => query.refetch()} />
 
   return (
     <div className="flex flex-col gap-6">
@@ -132,7 +172,7 @@ export default function ChecklistPage() {
       <Card className="p-5">
         <form onSubmit={add} noValidate className="grid items-start gap-4 md:grid-cols-[1fr_9rem_10rem_auto]">
           <TaskFields {...draft} error={error} eventDate={event.eventDate} onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))} />
-          <Button type="submit" className="md:mt-6">
+          <Button type="submit" className="md:mt-6" disabled={adding}>
             <Plus aria-hidden="true" /> Add task
           </Button>
         </form>
@@ -168,7 +208,7 @@ export default function ChecklistPage() {
                   <Checkbox
                     id={`task-${t.id}`}
                     checked={t.completed}
-                    onCheckedChange={(checked) => actions.updateTask(t.id, { completed: checked === true })}
+                    onCheckedChange={(checked) => actions.update(t.id, { completed: checked === true }).catch(() => undefined)}
                   />
                   <label htmlFor={`task-${t.id}`} className={`min-w-40 flex-1 cursor-pointer ${t.completed ? 'text-muted-foreground line-through' : ''}`}>
                     {t.title}

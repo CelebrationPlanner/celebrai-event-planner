@@ -1,11 +1,14 @@
-import { CalendarPlus, Info, LayoutDashboard, Menu, Settings, Sparkles } from 'lucide-react'
+import { CalendarPlus, Info, LayoutDashboard, LogOut, Menu, Settings, Sparkles } from 'lucide-react'
 import * as m from 'motion/react-m'
 import { useState } from 'react'
-import { Link, NavLink, Outlet, useLocation, useNavigation } from 'react-router'
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigation } from 'react-router'
 import { Logo } from '@/components/Logo'
+import { RouteFallback } from '@/components/RouteStates'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { useDemoStore } from '@/demo/DemoStore'
+import { useDashboard } from '@/lib/queries'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from './auth'
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -20,7 +23,8 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
   }`
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
-  const { events } = useDemoStore()
+  const { data } = useDashboard()
+  const { session } = useAuth()
   return (
     <nav aria-label="Main" className="flex flex-1 flex-col gap-6">
       <ul className="flex flex-col gap-1">
@@ -33,13 +37,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </li>
         ))}
       </ul>
-      <div>
+      <div className="flex-1">
         <p className="px-3 pb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Your events</p>
-        {events.length === 0 ? (
+        {!data ? null : data.events.length === 0 ? (
           <p className="px-3 text-sm text-muted-foreground">No events yet.</p>
         ) : (
           <ul className="flex flex-col gap-1">
-            {events.map((e) => (
+            {data.events.map((e) => (
               <li key={e.id}>
                 <NavLink to={`/events/${e.id}`} className={linkClass} onClick={onNavigate}>
                   <span className="truncate">{e.eventName}</span>
@@ -49,14 +53,26 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </ul>
         )}
       </div>
+      <div className="border-t pt-4">
+        <p className="truncate px-3 pb-2 text-xs text-muted-foreground">{session?.user.is_anonymous ? 'Demo account' : session?.user.email}</p>
+        <button type="button" onClick={() => supabase.auth.signOut()} className={linkClass({ isActive: false }) + ' w-full'}>
+          <LogOut className="size-4" aria-hidden="true" />
+          {session?.user.is_anonymous ? 'Exit demo' : 'Log out'}
+        </button>
+      </div>
     </nav>
   )
 }
 
+/** Layout for every signed-in screen. Unauthenticated visitors are sent to login, then back. */
 export default function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname } = useLocation()
   const navigation = useNavigation()
+  const { session, loading } = useAuth()
+
+  if (loading) return <RouteFallback />
+  if (!session) return <Navigate to={`/login?next=${encodeURIComponent(pathname)}`} replace />
 
   return (
     <div className="min-h-dvh lg:pl-64">
@@ -78,7 +94,7 @@ export default function AppShell() {
               <Menu />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 p-5">
+          <SheetContent side="left" className="flex w-72 flex-col p-5">
             <SheetHeader className="p-0">
               <SheetTitle>
                 <Logo to="/dashboard" />
@@ -89,17 +105,20 @@ export default function AppShell() {
         </Sheet>
       </header>
 
-      <aside aria-label="Demo data notice" className="border-b bg-gold-soft px-4 py-2 text-sm text-gold-foreground">
-        <div className="mx-auto flex max-w-6xl items-center gap-2">
-          <Info className="size-4 shrink-0" aria-hidden="true" />
-          <p>
-            <strong>Demo data.</strong> You’re exploring sample events. Changes stay in this tab and reset on refresh.{' '}
-            <Link to="/settings" className="underline underline-offset-2">
-              Manage demo
-            </Link>
-          </p>
-        </div>
-      </aside>
+      {session.user.is_anonymous && (
+        <aside aria-label="Demo account notice" className="border-b bg-gold-soft px-4 py-2 text-sm text-gold-foreground">
+          <div className="mx-auto flex max-w-6xl items-center gap-2">
+            <Info className="size-4 shrink-0" aria-hidden="true" />
+            <p>
+              <strong>Demo account.</strong> Your data is private but temporary.{' '}
+              <Link to="/signup" className="underline underline-offset-2">
+                Create an account
+              </Link>{' '}
+              to keep your plans.
+            </p>
+          </div>
+        </aside>
+      )}
 
       <m.main
         id="main"

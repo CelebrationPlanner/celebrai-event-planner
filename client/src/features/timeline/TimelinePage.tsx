@@ -3,8 +3,9 @@ import { Link } from 'react-router'
 import { EmptyState } from '@/components/EmptyState'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { useDemoStore } from '@/demo/DemoStore'
+import { ErrorState, LoadingBlock } from '@/components/QueryStates'
 import { formatDate, relativeDays, todayISO } from '@/lib/dates'
+import { usePlan, useTasks } from '@/lib/queries'
 import type { Task, TaskKind } from '@/types'
 import { useEvent } from '../events/useEvent'
 
@@ -17,11 +18,18 @@ const KIND: Record<TaskKind, { label: string; icon: typeof Store }> = {
 
 export default function TimelinePage() {
   const event = useEvent()
-  const { tasks, plans } = useDemoStore()
+  const tasksQuery = useTasks(event.id)
+  const planQuery = usePlan(event.id)
   const today = todayISO()
-  const plan = plans.find((p) => p.eventId === event.id)
-  const dated = tasks.filter((t) => t.eventId === event.id && t.dueDate).sort((a, b) => a.dueDate!.localeCompare(b.dueDate!))
-  const undated = tasks.filter((t) => t.eventId === event.id && !t.dueDate).length
+
+  if (tasksQuery.isPending || planQuery.isPending) return <LoadingBlock rows={4} label="Loading timeline" />
+  const failed = tasksQuery.error ?? planQuery.error
+  if (failed) return <ErrorState error={failed} onRetry={() => Promise.all([tasksQuery.refetch(), planQuery.refetch()])} />
+
+  const tasks = tasksQuery.data ?? []
+  const plan = planQuery.data?.plan
+  const dated = tasks.filter((t) => t.dueDate).sort((a, b) => a.dueDate!.localeCompare(b.dueDate!))
+  const undated = tasks.filter((t) => !t.dueDate).length
 
   const byDate = new Map<string, Task[]>()
   for (const t of dated) byDate.set(t.dueDate!, [...(byDate.get(t.dueDate!) ?? []), t])

@@ -40,3 +40,12 @@ export const client = (app: Express, user: TestUser) => ({
   patch: (path: string, body: object) => request(app).patch(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
   delete: (path: string) => request(app).delete(`/api${path}`).set('Authorization', `Bearer ${user.token}`),
 })
+
+/** A real Supabase anonymous user, as created by "Try the demo" (D10). */
+export async function makeAnonUser(): Promise<TestUser> {
+  const anon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: noSession })
+  const { data, error } = await anon.auth.signInAnonymously()
+  if (error || !data.session || !data.user) throw error ?? new Error('no session')
+  const db = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: noSession, global: { headers: { Authorization: `Bearer ${data.session.access_token}` } } })
+  return { id: data.user.id, token: data.session.access_token, db }
+}

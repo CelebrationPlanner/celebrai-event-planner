@@ -3,9 +3,11 @@ import { Link, NavLink, Outlet, useParams } from 'react-router'
 import { EmptyState } from '@/components/EmptyState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useDemoStore } from '@/demo/DemoStore'
+import { ErrorState, LoadingBlock } from '@/components/QueryStates'
+import { ApiError } from '@/lib/api'
 import { formatDate, relativeDays } from '@/lib/dates'
 import { formatMoney } from '@/lib/money'
+import { useEventQuery } from '@/lib/queries'
 
 const TABS = [
   { to: '', label: 'Overview' },
@@ -17,10 +19,11 @@ const TABS = [
 ]
 
 export default function EventLayout() {
-  const { eventId } = useParams()
-  const { events } = useDemoStore()
-  const event = events.find((e) => e.id === eventId)
+  const { eventId = '' } = useParams()
+  const { data: event, isPending, error, refetch } = useEventQuery(eventId)
 
+  if (isPending) return <LoadingBlock rows={4} label="Loading event" />
+  if (error && !(error instanceof ApiError && error.status === 404)) return <ErrorState error={error} onRetry={() => refetch()} />
   if (!event) {
     return (
       <EmptyState

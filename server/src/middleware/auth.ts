@@ -8,7 +8,7 @@ export type Db = SupabaseClient<Database>
 
 declare module 'express-serve-static-core' {
   interface Request {
-    auth?: { userId: string; db: Db }
+    auth?: { userId: string; isAnonymous: boolean; db: Db }
   }
 }
 
@@ -33,6 +33,7 @@ export function requireAuth(env: Env): RequestHandler {
 
     req.auth = {
       userId: data.claims.sub,
+      isAnonymous: data.claims.is_anonymous === true,
       db: createClient<Database>(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
         auth: noSession,
         global: { headers: { Authorization: `Bearer ${token}` } },

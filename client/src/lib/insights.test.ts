@@ -1,48 +1,24 @@
+import type { Task } from '@celebrai/shared'
 import { describe, expect, it } from 'vitest'
-import { createDemoState } from '@/demo/demoData'
-import type { Expense } from '@/types'
-import { missingFields, sortTasks, summarizeBudget, taskProgress } from './insights'
+import { sortTasks, taskProgress } from './insights'
 
-const { events, expenses, tasks } = createDemoState('2026-11-01')
-const birthday = events[0]
-const rows = (pairs: Array<[number, number | null]>): Expense[] =>
-  pairs.map(([estimatedMinor, actualMinor], i) => ({ id: String(i), eventId: 'e', category: 'food', estimatedMinor, actualMinor }))
-
-describe('summarizeBudget', () => {
-  it('balances when allocations equal the budget', () => {
-    const s = summarizeBudget(birthday.budgetMinor, expenses.filter((x) => x.eventId === birthday.id))
-    expect(s.estimatedMinor).toBe(2_500_000)
-    expect(s.remainingMinor).toBe(0)
-    expect(s.overrunMinor).toBe(0)
-  })
-
-  it('reports the exact overrun (₹20,000 budget, ₹24,000 allocated → ₹4,000)', () => {
-    const s = summarizeBudget(2_000_000, rows([[1_500_000, null], [900_000, null]]))
-    expect(s.overrunMinor).toBe(400_000)
-    expect(s.remainingMinor).toBe(0)
-    expect(s.warnings[0]).toMatch(/exceed/i)
-  })
-
-  it('flags categories whose actual spend is above estimate', () => {
-    const s = summarizeBudget(1_000_000, rows([[100_000, 150_000]]))
-    expect(s.actualMinor).toBe(150_000)
-    expect(s.warnings.some((w) => /above its estimate/.test(w))).toBe(true)
-  })
-})
-
-describe('missingFields', () => {
-  it('lists critical details that are absent', () => {
-    expect(missingFields(birthday)).toEqual([])
-    expect(missingFields({ ...birthday, eventDate: null, guestCount: null })).toEqual(['Event date', 'Guest count'])
-  })
-})
+const task = (title: string, priority: Task['priority'], dueDate: string | null, completed = false): Task =>
+  ({ id: title, eventId: 'e', title, priority, dueDate, completed, kind: 'preparation', createdAt: '', updatedAt: '' })
 
 describe('tasks', () => {
-  it('computes completion progress and sorts open tasks by due date then priority', () => {
-    const own = tasks.filter((t) => t.eventId === birthday.id)
-    expect(taskProgress(own)).toEqual({ done: 1, total: 8, percent: 13 })
-    const sorted = sortTasks(own)
-    expect(sorted.at(-1)?.completed).toBe(true)
-    expect(sorted[0].title).toBe('Book magician or game host')
+  it('computes completion progress', () => {
+    expect(taskProgress([task('a', 'low', null, true), task('b', 'low', null), task('c', 'low', null)])).toEqual({ done: 1, total: 3, percent: 33 })
+    expect(taskProgress([])).toEqual({ done: 0, total: 0, percent: 0 })
+  })
+
+  it('sorts open tasks by due date, then priority, with undated and completed last', () => {
+    const sorted = sortTasks([
+      task('done', 'high', '2026-11-02', true),
+      task('undated', 'high', null),
+      task('later', 'high', '2026-11-09'),
+      task('soon-low', 'low', '2026-11-03'),
+      task('soon-high', 'high', '2026-11-03'),
+    ])
+    expect(sorted.map((t) => t.title)).toEqual(['soon-high', 'soon-low', 'later', 'undated', 'done'])
   })
 })

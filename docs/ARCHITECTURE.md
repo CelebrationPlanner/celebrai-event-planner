@@ -279,3 +279,11 @@ Budget allocation starts from the spec split (§11 of the product spec), applies
 - **Output validation:** responses are constrained by a JSON schema derived from the Zod schemas, then validated. Over-long text is trimmed; wrong shapes, enums, times and numbers are rejected (`502 AI_INVALID_OUTPUT`, nothing saved).
 - **Bounded calls:** a timeout (`504`), one retry on transient provider errors only, a per-user AI rate limit, and provider errors logged by status code only.
 - **Provider-neutral:** `AIProvider` is the only interface business logic uses. `gemini.ts` implements it; tests use a scripted fake.
+
+## 13. Frontend integration (Phase 5)
+
+- **Auth:** Supabase Auth runs in the browser (sign up, log in, log out, session restore). `AppShell` sends signed-out visitors to `/login?next=…` and back afterwards; only same-app paths are accepted as `next`.
+- **Demo (D10):** "Explore the demo" signs in anonymously and calls `POST /api/demo/seed`. That endpoint is for anonymous users only, idempotent, and seeds one labelled sample event whose budget, tasks, decisions and risks come from the real engine, with pre-written sample wording instead of AI text. Signing up from a demo converts the same user (`updateUser`), so the events are kept.
+- **Data:** a typed API client (`client/src/lib/api.ts`) attaches the access token and applies timeouts (20 s, or 60 s for AI calls). Failures become `ApiError` with the server's safe message, and a 401 signs the user out. TanStack Query caches responses, and every change refreshes the event's queries plus the dashboard. `GET /api/dashboard` returns everything the dashboard needs in one request.
+- **Shared code:** the client imports domain types, `formatMoney`, date arithmetic and `missingDetails` from `@celebrai/shared`. Budget totals and warnings (structured, worded by the UI) always come from the server.
+- **Tests:** component tests run the real routes against an in-memory fake backend (`client/src/test/fakeBackend.ts`). Playwright end-to-end tests run the real client, API and local Supabase, with axe in a real browser (including colour contrast).

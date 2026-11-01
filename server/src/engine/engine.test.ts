@@ -1,7 +1,7 @@
-import { addDays, BUDGET_CATEGORIES, type CelebrationEvent } from '@celebrai/shared'
+import { addDays, BUDGET_CATEGORIES, missingDetails, type CelebrationEvent } from '@celebrai/shared'
 import { describe, expect, it } from 'vitest'
 import { allocateBudget } from './budget.ts'
-import { analyzeEvent, missingDetails } from './context.ts'
+import { analyzeEvent } from './context.ts'
 import { planTasks } from './tasks.ts'
 
 const TODAY = '2026-11-01'

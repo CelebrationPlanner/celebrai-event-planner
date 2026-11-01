@@ -1,20 +1,24 @@
+import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { LazyMotion, MotionConfig } from 'motion/react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Toaster } from '@/components/ui/sonner'
-import { DemoStoreProvider } from '@/demo/DemoStore'
-import type { DemoState } from '@/demo/demoData'
+import { createQueryClient } from '@/lib/queries'
+import { AuthProvider } from './auth'
 
 const loadMotionFeatures = () => import('./motionFeatures').then((m) => m.default)
 
-export function Providers({ children, initialState }: { children: ReactNode; initialState?: DemoState }) {
+export function Providers({ children, queryClient }: { children: ReactNode; queryClient?: QueryClient }) {
+  const [client] = useState(() => queryClient ?? createQueryClient())
   return (
-    <DemoStoreProvider initialState={initialState}>
-      <MotionConfig reducedMotion="user">
-        <LazyMotion features={loadMotionFeatures} strict>
-          {children}
-          <Toaster position="top-center" richColors closeButton />
-        </LazyMotion>
-      </MotionConfig>
-    </DemoStoreProvider>
+    <QueryClientProvider client={client}>
+      <AuthProvider>
+        <MotionConfig reducedMotion="user">
+          <LazyMotion features={loadMotionFeatures} strict>
+            {children}
+            <Toaster position="top-center" richColors closeButton />
+          </LazyMotion>
+        </MotionConfig>
+      </AuthProvider>
+    </QueryClientProvider>
   )
 }

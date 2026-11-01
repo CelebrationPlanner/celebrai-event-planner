@@ -19,10 +19,14 @@ import {
   Wallet,
 } from 'lucide-react'
 import * as m from 'motion/react-m'
-import { Link } from 'react-router'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { toast } from 'sonner'
+import { startDemo } from '@/app/auth'
 import { Logo } from '@/components/Logo'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { errorMessage } from '@/lib/api'
 import type { Occasion } from '@/types'
 
 const EXAMPLES: Array<{ occasion: Occasion; icon: typeof Cake; title: string; example: string }> = [
@@ -57,6 +61,24 @@ const DECISIONS = [
   { icon: Timer, when: 'Event in days, not weeks', then: 'moves bookings to the top and drops unrealistic lead times' },
   { icon: Salad, when: 'Dietary needs', then: 'highlights them in every catering recommendation' },
 ]
+
+/** Starts an isolated demo account with a sample event, then opens the dashboard. */
+function useDemo() {
+  const navigate = useNavigate()
+  const [pending, setPending] = useState(false)
+  async function run() {
+    setPending(true)
+    try {
+      await startDemo()
+      navigate('/dashboard')
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setPending(false)
+    }
+  }
+  return { run, pending }
+}
 
 function PlanPreview() {
   const bars = [
@@ -120,6 +142,7 @@ function PlanPreview() {
 }
 
 export default function LandingPage() {
+  const demo = useDemo()
   return (
     <div className="min-h-dvh">
       <header className="sticky top-0 z-40 border-b border-transparent bg-background/85 backdrop-blur">
@@ -158,8 +181,8 @@ export default function LandingPage() {
                   Start planning <ArrowRight aria-hidden="true" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="h-11 px-5 text-base" asChild>
-                <Link to="/dashboard">Explore the demo</Link>
+              <Button size="lg" variant="outline" className="h-11 px-5 text-base" onClick={demo.run} disabled={demo.pending}>
+                {demo.pending ? 'Preparing your demo…' : 'Explore the demo'}
               </Button>
             </div>
             <ul className="mt-8 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
@@ -264,7 +287,9 @@ export default function LandingPage() {
           <nav aria-label="Footer" className="flex gap-4">
             <Link to="/login" className="hover:text-foreground">Log in</Link>
             <Link to="/signup" className="hover:text-foreground">Sign up</Link>
-            <Link to="/dashboard" className="hover:text-foreground">Demo</Link>
+            <button type="button" onClick={demo.run} disabled={demo.pending} className="hover:text-foreground">
+              Demo
+            </button>
           </nav>
         </div>
       </footer>

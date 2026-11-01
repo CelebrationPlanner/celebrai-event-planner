@@ -18,11 +18,6 @@ export interface Analysis {
   assumptions: string[]
 }
 
-export interface MissingDetail {
-  field: 'occasion' | 'eventDate' | 'guestCount' | 'budgetMinor'
-  question: string
-}
-
 /** Below this spend per guest (minor units) a celebration is treated as tight. Weddings ×3. */
 const LOW_BUDGET_PER_GUEST: Record<CurrencyCode, number> = { INR: 40_000, USD: 1_500, EUR: 1_500, GBP: 1_200 }
 const LARGE_GUEST_COUNT = 150
@@ -30,16 +25,6 @@ const SHORT_NOTICE_DAYS = 14
 const URGENT_DAYS = 3
 const CHILD_AGE = /child|kid|toddler|teen|under 12/i
 const CHILD_BIRTHDAY = /\b([1-9]|1[0-2])(st|nd|rd|th)\s+birthday/i
-
-/** Critical details, in the order the assistant should ask for them. */
-export function missingDetails(event: CelebrationEvent): MissingDetail[] {
-  const missing: MissingDetail[] = []
-  if (!event.occasion) missing.push({ field: 'occasion', question: 'What are you celebrating — a birthday, wedding, anniversary or something else?' })
-  if (!event.eventDate) missing.push({ field: 'eventDate', question: 'What date is the event? I need it to build a realistic schedule.' })
-  if (!event.guestCount) missing.push({ field: 'guestCount', question: 'Roughly how many guests are you expecting?' })
-  if (!event.budgetMinor) missing.push({ field: 'budgetMinor', question: 'What’s your total budget?' })
-  return missing
-}
 
 export function analyzeEvent(event: CelebrationEvent, today: string): Analysis {
   const daysUntil = event.eventDate ? daysBetween(today, event.eventDate) : null

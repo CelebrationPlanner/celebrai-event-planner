@@ -140,7 +140,7 @@ export interface Profile {
 
 export interface ApiErrorBody {
   error: {
-    code: 'VALIDATION_ERROR' | 'UNAUTHENTICATED' | 'NOT_FOUND' | 'PAYLOAD_TOO_LARGE' | 'RATE_LIMITED' | 'AI_UNAVAILABLE' | 'AI_TIMEOUT' | 'AI_INVALID_OUTPUT' | 'INTERNAL'
+    code: 'VALIDATION_ERROR' | 'UNAUTHENTICATED' | 'FORBIDDEN' | 'NOT_FOUND' | 'PAYLOAD_TOO_LARGE' | 'RATE_LIMITED' | 'AI_UNAVAILABLE' | 'AI_TIMEOUT' | 'AI_INVALID_OUTPUT' | 'INTERNAL'
     message: string
     details?: unknown
   }

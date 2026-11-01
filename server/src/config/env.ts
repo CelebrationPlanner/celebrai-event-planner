@@ -12,7 +12,11 @@ const envSchema = z.object({
   // AI routes: stricter per-user limit, since each call costs money and time.
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(10),
   // Optional: without a key the API runs and AI routes answer 503.
-  GEMINI_API_KEY: z.string().min(1).optional(),
+  GEMINI_API_KEY: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => v || undefined), // blank (as in .env.example) = not configured
   GEMINI_MODEL: z.string().min(1).default('gemini-flash-latest'),
   AI_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
 })

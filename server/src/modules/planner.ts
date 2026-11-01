@@ -1,4 +1,4 @@
-import { chatRequestSchema, generatePlanSchema, invitationGenerateSchema, MAX_HISTORY, MAX_MESSAGE_LENGTH, type CelebrationEvent, type ChatMessage } from '@celebrai/shared'
+import { missingDetails, chatRequestSchema, generatePlanSchema, invitationGenerateSchema, MAX_HISTORY, MAX_MESSAGE_LENGTH, type CelebrationEvent, type ChatMessage } from '@celebrai/shared'
 import { Router, type RequestHandler } from 'express'
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
@@ -8,7 +8,7 @@ import { aiChatSchema, aiInvitationSchema, aiPlanSchema } from '../ai/schemas.ts
 import { generateStructured } from '../ai/structured.ts'
 import { toEvent } from '../db/mappers.ts'
 import { allocateBudget } from '../engine/budget.ts'
-import { analyzeEvent, missingDetails } from '../engine/context.ts'
+import { analyzeEvent } from '../engine/context.ts'
 import { applyExtraction, PLACEHOLDER_NAME } from '../engine/extraction.ts'
 import { buildPlan } from '../engine/plan.ts'
 import { planTasks } from '../engine/tasks.ts'
@@ -41,7 +41,7 @@ async function loadHistory(db: Db, userId: string, eventId: string): Promise<Cha
 }
 
 /** Fingerprint of everything that shapes a plan; unchanged context means no new AI call. */
-const contextHash = (e: CelebrationEvent) => createHash('sha256').update(JSON.stringify({ ...contextOf(e), currency: e.currency, budgetMinor: e.budgetMinor })).digest('hex')
+export const contextHash = (e: CelebrationEvent) => createHash('sha256').update(JSON.stringify({ ...contextOf(e), currency: e.currency, budgetMinor: e.budgetMinor })).digest('hex')
 
 export function createPlannerRouter(ai: AIProvider, aiLimiter: RequestHandler) {
   const router = Router()
