@@ -1,4 +1,4 @@
-import { CalendarDays, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react'
+import { CalendarDays, ListChecks, Pencil, Plus, Trash2, WandSparkles } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import { EmptyState } from '@/components/EmptyState'
@@ -17,6 +17,7 @@ import { sortTasks, taskProgress } from '@/lib/insights'
 import { useRefreshEvent, useTasks } from '@/lib/queries'
 import type { Priority, Task } from '@/types'
 import { useEvent } from '../events/useEvent'
+import { SuggestTasksDialog } from './SuggestTasksDialog'
 import { PRIORITIES, validateTask } from './taskForm'
 
 /** Every change is persisted through the API, then the event's queries refresh. */
@@ -123,6 +124,7 @@ export default function ChecklistPage() {
   const [draft, setDraft] = useState({ title: '', priority: 'medium' as Priority, dueDate: '' })
   const [error, setError] = useState<string>()
   const [editing, setEditing] = useState<Task | null>(null)
+  const [suggesting, setSuggesting] = useState(false)
 
   const tasks = query.data ?? []
   const progress = taskProgress(tasks)
@@ -167,6 +169,9 @@ export default function ChecklistPage() {
           </span>
         </div>
         <Progress value={progress.percent} aria-label="Checklist completion" />
+        <Button variant="outline" size="sm" className="self-start" onClick={() => setSuggesting(true)}>
+          <WandSparkles aria-hidden="true" /> Suggest tasks
+        </Button>
       </Card>
 
       <Card className="p-5">
@@ -196,7 +201,7 @@ export default function ChecklistPage() {
         <EmptyState
           icon={ListChecks}
           title={tasks.length === 0 ? 'No tasks yet' : `No ${filter} tasks`}
-          description={tasks.length === 0 ? 'Add your first task above, or generate a plan to get a prioritised checklist automatically.' : 'Try a different filter.'}
+          description={tasks.length === 0 ? 'Add your first task above, or use “Suggest tasks” for a prioritised checklist with realistic deadlines.' : 'Try a different filter.'}
         />
       ) : (
         <Card className="gap-0 p-0">
@@ -236,6 +241,7 @@ export default function ChecklistPage() {
         </Card>
       )}
 
+      {suggesting && <SuggestTasksDialog eventId={event.id} existing={tasks} onClose={() => setSuggesting(false)} />}
       {editing && <EditTaskDialog task={editing} eventDate={event.eventDate} onClose={() => setEditing(null)} />}
     </div>
   )

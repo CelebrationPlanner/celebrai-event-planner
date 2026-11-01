@@ -113,6 +113,29 @@ const api: Api = {
     db.tasks.push(task)
     return task
   },
+  createTasks: async (id, inputs) => Promise.all(inputs.map((input) => api.createTask(id, input))),
+  // Mirrors the server: the default split (spec §11), exact to the minor unit.
+  suggestions: async (id) => {
+    const e = find(id)
+    const shares = [['venue', 2000], ['food', 3000], ['decoration', 1500], ['photography', 1000], ['entertainment', 1000], ['invitations', 300], ['miscellaneous', 200], ['contingency', 1000]] as const
+    return {
+      missing: [],
+      decisions: [{ rule: 'Children attending', detail: 'Age-appropriate activities.' }],
+      budget: e.budgetMinor ? shares.map(([category, bp]) => ({ category, amountMinor: (e.budgetMinor * bp) / 10_000, reasoning: `Reason for ${category}.` })) : [],
+      tasks: [
+        { title: 'Book the venue', priority: 'high', kind: 'vendor', dueDate: addDays(today, 2) },
+        { title: 'Order the cake', priority: 'medium', kind: 'vendor', dueDate: addDays(today, 5) },
+        { title: 'Buy return gifts', priority: 'medium', kind: 'shopping', dueDate: addDays(today, 6) },
+      ],
+    }
+  },
+  updateSchedule: async (id, schedule) => {
+    const latest = db.plans.get(id)
+    if (!latest) throw new ApiError(404, 'NOT_FOUND', 'Plan not found.')
+    const saved = { version: latest.version + 1, plan: { ...latest.plan, schedule: [...schedule].sort((a, b) => a.time.localeCompare(b.time)) }, createdAt: now }
+    db.plans.set(id, saved)
+    return saved
+  },
   updateTask: async (_id, taskId, patch) => Object.assign(db.tasks.find((t) => t.id === taskId)!, patch),
   deleteTask: async (_id, taskId) => {
     db.tasks = db.tasks.filter((t) => t.id !== taskId)

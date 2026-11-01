@@ -15,6 +15,7 @@ import { demoRouter } from './modules/demo.ts'
 import { eventsRouter } from './modules/events.ts'
 import { createPlannerRouter } from './modules/planner.ts'
 import { profileRouter } from './modules/profile.ts'
+import { suggestionsRouter } from './modules/suggestions.ts'
 import { tasksRouter } from './modules/tasks.ts'
 
 /** Request id + one safe log line per request: method, path (no query), status, duration. */
@@ -72,6 +73,7 @@ export function createApp(env: Env, deps: { ai?: AIProvider } = {}) {
     profileRouter,
     dashboardRouter,
     demoRouter,
+    suggestionsRouter,
     createPlannerRouter(ai, aiLimiter),
   )
 

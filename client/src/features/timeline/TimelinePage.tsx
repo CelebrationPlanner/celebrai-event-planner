@@ -5,9 +5,10 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { ErrorState, LoadingBlock } from '@/components/QueryStates'
 import { formatDate, relativeDays, todayISO } from '@/lib/dates'
-import { usePlan, useTasks } from '@/lib/queries'
+import { usePlan, useProfile, useTasks } from '@/lib/queries'
 import type { Task, TaskKind } from '@/types'
 import { useEvent } from '../events/useEvent'
+import { ScheduleEditor } from './ScheduleEditor'
 
 const KIND: Record<TaskKind, { label: string; icon: typeof Store }> = {
   vendor: { label: 'Vendor deadline', icon: Store },
@@ -21,6 +22,8 @@ export default function TimelinePage() {
   const tasksQuery = useTasks(event.id)
   const planQuery = usePlan(event.id)
   const today = todayISO()
+  // The server computes "today" in the profile time zone (D8); show that one.
+  const timeZone = useProfile().data?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
 
   if (tasksQuery.isPending || planQuery.isPending) return <LoadingBlock rows={4} label="Loading timeline" />
   const failed = tasksQuery.error ?? planQuery.error
@@ -93,18 +96,14 @@ export default function TimelinePage() {
         ) : !plan ? (
           <EmptyState icon={CalendarClock} title="No schedule yet" description="Generate a plan to get an hour-by-hour agenda for the day." />
         ) : (
-          <Card className="gap-0 p-0">
-            <ol className="divide-y">
-              {plan.schedule.map((s) => (
-                <li key={s.time} className="flex gap-4 px-5 py-3">
-                  <time className="w-14 shrink-0 font-semibold text-primary tabular-nums">{s.time}</time>
-                  <span className="text-sm">{s.activity}</span>
-                </li>
-              ))}
-            </ol>
-          </Card>
+          <ScheduleEditor key={planQuery.data?.version} eventId={event.id} schedule={plan.schedule} />
         )}
       </section>
+
+      <p className="text-xs text-muted-foreground lg:col-span-2">
+        <strong className="font-medium">How deadlines are set:</strong> each task gets a typical lead time before the event, worked out in your time zone ({timeZone}). Deadlines are never in
+        the past or after the event; when time is short, bookings fall due today and are marked high priority.
+      </p>
     </div>
   )
 }

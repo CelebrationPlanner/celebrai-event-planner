@@ -38,6 +38,7 @@ export const client = (app: Express, user: TestUser) => ({
   get: (path: string) => request(app).get(`/api${path}`).set('Authorization', `Bearer ${user.token}`),
   post: (path: string, body: object) => request(app).post(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
   patch: (path: string, body: object) => request(app).patch(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
+  put: (path: string, body: object) => request(app).put(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
   delete: (path: string) => request(app).delete(`/api${path}`).set('Authorization', `Bearer ${user.token}`),
 })
 

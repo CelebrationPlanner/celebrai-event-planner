@@ -69,6 +69,9 @@ export const taskCreateSchema = z.strictObject({
   dueDate: isoDateSchema.nullable().default(null),
   kind: z.enum(TASK_KINDS).default('preparation'),
 })
+/** Adding several tasks at once (e.g. accepted engine suggestions). */
+export const tasksBulkSchema = z.strictObject({ tasks: z.array(taskCreateSchema).min(1).max(30) })
+
 export const taskUpdateSchema = z
   .strictObject({ title: z.string().trim().min(2).max(200), priority: z.enum(PRIORITIES), dueDate: isoDateSchema.nullable(), kind: z.enum(TASK_KINDS), completed: z.boolean() })
   .partial()

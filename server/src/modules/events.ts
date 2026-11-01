@@ -1,4 +1,4 @@
-import { eventCreateSchema, eventUpdateSchema, invitationSchema, paginationSchema, type EventUpdate } from '@celebrai/shared'
+import { eventCreateSchema, eventPlanSchema, eventUpdateSchema, invitationSchema, paginationSchema, scheduleUpdateSchema, type EventUpdate } from '@celebrai/shared'
 import { Router } from 'express'
 import type { Database } from '../db/database.types.ts'
 import { toEvent } from '../db/mappers.ts'
@@ -83,6 +83,24 @@ eventsRouter.get('/events/:id/plan', async (req, res) => {
     await db.from('event_plans').select('version, plan, created_at').eq('event_id', id).eq('user_id', userId).order('version', { ascending: false }).limit(1).maybeSingle(),
   )
   res.json({ data: row ? { version: row.version, plan: row.plan, createdAt: row.created_at } : null })
+})
+
+/**
+ * Plan editing: the user's event-day agenda is saved as a new plan version (history kept).
+ * The context fingerprint is unchanged, so a later plain "generate" keeps this edit.
+ */
+eventsRouter.put('/events/:id/plan/schedule', async (req, res) => {
+  const { db, userId } = getAuth(req)
+  const id = parseId(req.params.id)
+  const { schedule } = scheduleUpdateSchema.parse(req.body)
+  await loadOwnedEvent(db, userId, id)
+  const latest = unwrapMaybe(
+    await db.from('event_plans').select('version, plan').eq('event_id', id).eq('user_id', userId).order('version', { ascending: false }).limit(1).maybeSingle(),
+  )
+  if (!latest) throw notFound('Plan')
+  const plan = eventPlanSchema.parse({ ...(latest.plan as object), schedule: [...schedule].sort((a, b) => a.time.localeCompare(b.time)) })
+  const row = unwrap(await db.from('event_plans').insert({ event_id: id, user_id: userId, version: latest.version + 1, plan }).select('version, plan, created_at').single())
+  res.json({ data: { version: row.version, plan: row.plan, createdAt: row.created_at } })
 })
 
 eventsRouter.patch('/events/:id/invitation', async (req, res) => {

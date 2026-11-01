@@ -9,6 +9,7 @@ import type {
   EventCreate,
   EventPlan,
   EventUpdate,
+  MissingDetail,
   Expense,
   InvitationTone,
   Profile,
@@ -73,6 +74,12 @@ export interface ChatResult {
   readyToGenerate: boolean
 }
 export type GenerateResult = { kind: 'clarification'; missing: string[]; questions: string[] } | { kind: 'plan'; reused: boolean; version: number; plan: EventPlan }
+export interface Suggestions {
+  missing: MissingDetail[]
+  decisions: EventPlan['decisions']
+  budget: EventPlan['budget']
+  tasks: Array<Pick<Task, 'title' | 'priority' | 'kind' | 'dueDate'>>
+}
 export type EventInput = Partial<Omit<EventCreate, 'status'>> & Pick<EventCreate, 'eventName' | 'budgetMinor'>
 
 export const api = {
@@ -86,6 +93,9 @@ export const api = {
   updateBudget: (id: string, expenses: Array<Pick<Expense, 'category' | 'estimatedMinor' | 'actualMinor'>>) =>
     request<{ expenses: Expense[]; summary: BudgetSummary }>('PATCH', `/events/${id}/budget`, { expenses }),
   tasks: (id: string) => request<Task[]>('GET', `/events/${id}/tasks`),
+  createTasks: (id: string, tasks: Array<Partial<TaskCreate> & Pick<TaskCreate, 'title'>>) => request<Task[]>('POST', `/events/${id}/tasks/bulk`, { tasks }),
+  suggestions: (id: string) => request<Suggestions>('GET', `/events/${id}/suggestions`),
+  updateSchedule: (id: string, schedule: EventPlan['schedule']) => request<SavedPlan>('PUT', `/events/${id}/plan/schedule`, { schedule }),
   createTask: (id: string, input: Partial<TaskCreate> & Pick<TaskCreate, 'title'>) => request<Task>('POST', `/events/${id}/tasks`, input),
   updateTask: (id: string, taskId: string, patch: TaskUpdate) => request<Task>('PATCH', `/events/${id}/tasks/${taskId}`, patch),
   deleteTask: (id: string, taskId: string) => request<void>('DELETE', `/events/${id}/tasks/${taskId}`),

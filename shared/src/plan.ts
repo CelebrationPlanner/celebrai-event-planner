@@ -66,3 +66,7 @@ export function missingDetails(event: CelebrationEvent): MissingDetail[] {
   if (!event.budgetMinor) missing.push({ field: 'budgetMinor', question: 'What’s your total budget?' })
   return missing
 }
+
+export const scheduleUpdateSchema = z.strictObject({
+  schedule: z.array(z.strictObject({ time: timeOfDaySchema, activity: line(200) })).max(20),
+})

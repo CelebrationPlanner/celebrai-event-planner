@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { Lightbulb, PiggyBank, Receipt, TriangleAlert, Wallet } from 'lucide-react'
+import { Lightbulb, PiggyBank, Receipt, Scale, TriangleAlert, Wallet } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { toast } from 'sonner'
@@ -16,8 +16,8 @@ import { api, errorMessage } from '@/lib/api'
 import { formatMoney, parseMoney, toMajorInput } from '@/lib/money'
 import { useBudget, useRefreshEvent } from '@/lib/queries'
 import { BUDGET_CATEGORIES, categoryLabel, type CurrencyCode, type Expense } from '@/types'
-import { GeneratePlan } from '../events/GeneratePlan'
 import { useEvent } from '../events/useEvent'
+import { SuggestedSplitDialog } from './SuggestedSplitDialog'
 
 function EditExpenseDialog({ eventId, expense, currency, onClose }: { eventId: string; expense: Expense; currency: CurrencyCode; onClose: () => void }) {
   const refresh = useRefreshEvent()
@@ -77,6 +77,7 @@ export default function BudgetPage() {
   const { data, isPending, error, refetch } = useBudget(event.id)
   const refresh = useRefreshEvent()
   const [editing, setEditing] = useState<Expense | null>(null)
+  const [suggesting, setSuggesting] = useState(false)
   const money = (minor: number) => formatMoney(minor, event.currency)
   const setUp = useMutation({
     mutationFn: () => api.updateBudget(event.id, BUDGET_CATEGORIES.map((c) => ({ category: c.value, estimatedMinor: 0, actualMinor: null }))),
@@ -88,21 +89,27 @@ export default function BudgetPage() {
   if (error) return <ErrorState error={error} onRetry={() => refetch()} />
 
   const { expenses, summary } = data
+  const suggestDialog = suggesting && <SuggestedSplitDialog event={event} current={expenses} onClose={() => setSuggesting(false)} />
   if (expenses.length === 0) {
     return (
+      <>
       <EmptyState
         icon={Wallet}
         title="No budget breakdown yet"
-        description={`Your total budget is ${money(event.budgetMinor)}. Generating a plan splits it across venue, food, décor and more — with the reasoning for each — or you can fill in the categories yourself.`}
+        description={`Your total budget is ${money(event.budgetMinor)}. Get an instant split across venue, food, décor and more — with the reasoning for each — or fill in the categories yourself.`}
         action={
           <div className="flex flex-col items-center gap-3">
-            <GeneratePlan eventId={event.id} />
+            <Button onClick={() => setSuggesting(true)} disabled={!event.budgetMinor}>
+              <Scale aria-hidden="true" /> Use suggested split
+            </Button>
             <Button variant="outline" onClick={() => setUp.mutate()} disabled={setUp.isPending}>
               Set up categories manually
             </Button>
           </div>
         }
       />
+      {suggestDialog}
+      </>
     )
   }
 
@@ -187,7 +194,12 @@ export default function BudgetPage() {
       </div>
 
       <Card className="gap-0 p-0">
-        <h2 className="border-b px-5 py-4 font-semibold">Categories</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3">
+          <h2 className="font-semibold">Categories</h2>
+          <Button variant="outline" size="sm" onClick={() => setSuggesting(true)}>
+            <Scale aria-hidden="true" /> Compare with suggested split
+          </Button>
+        </div>
         <ul className="divide-y">
           {expenses.map((x) => {
             const pct = summary.budgetMinor ? Math.round((x.estimatedMinor / summary.budgetMinor) * 100) : 0
@@ -212,6 +224,7 @@ export default function BudgetPage() {
         </ul>
       </Card>
 
+      {suggestDialog}
       {editing && <EditExpenseDialog eventId={event.id} expense={editing} currency={event.currency} onClose={() => setEditing(null)} />}
     </div>
   )

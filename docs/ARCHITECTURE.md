@@ -287,3 +287,12 @@ Budget allocation starts from the spec split (§11 of the product spec), applies
 - **Data:** a typed API client (`client/src/lib/api.ts`) attaches the access token and applies timeouts (20 s, or 60 s for AI calls). Failures become `ApiError` with the server's safe message, and a 401 signs the user out. TanStack Query caches responses, and every change refreshes the event's queries plus the dashboard. `GET /api/dashboard` returns everything the dashboard needs in one request.
 - **Shared code:** the client imports domain types, `formatMoney`, date arithmetic and `missingDetails` from `@celebrai/shared`. Budget totals and warnings (structured, worded by the UI) always come from the server.
 - **Tests:** component tests run the real routes against an in-memory fake backend (`client/src/test/fakeBackend.ts`). Playwright end-to-end tests run the real client, API and local Supabase, with axe in a real browser (including colour contrast).
+
+## 14. Budget, checklist, timeline and invitations (Phase 6)
+
+- **Engine suggestions without AI:** `GET /api/events/:id/suggestions` returns the engine's budget split, checklist, applied rules and missing details. It is read-only and never saves anything.
+  - **Budget:** "Use suggested split" and "Compare with suggested split" show current vs suggested amounts with the reasons, and apply only after the user confirms. Recorded actual spend is kept.
+  - **Checklist:** "Suggest tasks" lists the engine's tasks the user doesn't already have and adds the chosen ones with `POST /api/events/:id/tasks/bulk`. That request checks every deadline first, then inserts in one statement, so it is all-or-nothing.
+- **Plan editing:** `PUT /api/events/:id/plan/schedule` saves the edited event-day agenda as a new plan version, validated against `eventPlanSchema` and sorted by time. Because the context fingerprint is unchanged, a later plain "generate" keeps the edit; "regenerate" replaces it.
+- **Deadlines:** suggested tasks for an event whose date has passed are left undated. The Timeline explains how deadlines are set, using the profile time zone.
+- **Invitations:** templates for all four tones are filled from the event, with bracketed placeholders for unknown details. "Write with AI" is the AI option. Sharing works through the browser share sheet, copy, a WhatsApp link (`wa.me`) or the email app (`mailto:`). No messaging integration or account access is involved.

@@ -147,6 +147,11 @@ describe('Scenario 7 — missing date and guest count', () => {
     expect(missing[0].question).toMatch(/date/i)
   })
 
+  it('never dates tasks for an event that has already passed', () => {
+    const event = makeEvent({ eventDate: addDays(TODAY, -2) })
+    expect(planTasks(event, analyzeEvent(event, TODAY), TODAY).every((t) => t.dueDate === null)).toBe(true)
+  })
+
   it('creates undated tasks rather than inventing a schedule', () => {
     const event = makeEvent({ eventDate: null })
     expect(planTasks(event, analyzeEvent(event, TODAY), TODAY).every((t) => t.dueDate === null)).toBe(true)

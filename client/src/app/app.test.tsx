@@ -206,3 +206,56 @@ describe('Routing', () => {
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
   })
 })
+
+describe('Phase 6: suggestions, plan editing and invitation templates', () => {
+  it('reviews and applies the suggested budget split', async () => {
+    const { user } = renderApp('/events/evt-anniversary/budget')
+    await user.click(await screen.findByRole('button', { name: /use suggested split/i }))
+    const dialog = await screen.findByRole('dialog')
+    expect(await within(dialog).findByRole('rowheader', { name: /Food & catering/ })).toBeInTheDocument()
+    expect(within(dialog).getByText('Children attending')).toBeInTheDocument()
+    expect(within(dialog).getAllByText('₹15,000').length).toBeGreaterThan(0) // suggested total equals the budget
+    expect(db.expenses.filter((x) => x.eventId === 'evt-anniversary')).toHaveLength(0) // nothing saved yet
+
+    await user.click(within(dialog).getByRole('button', { name: 'Apply this split' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(db.expenses.filter((x) => x.eventId === 'evt-anniversary').reduce((s, x) => s + x.estimatedMinor, 0)).toBe(1_500_000)
+    expect(await screen.findByRole('button', { name: 'Edit Venue' })).toBeInTheDocument()
+  })
+
+  it('adds only the suggested tasks the user keeps, skipping ones already on the list', async () => {
+    const { user } = renderApp('/events/evt-birthday/checklist')
+    await user.click(await screen.findByRole('button', { name: /suggest tasks/i }))
+    const dialog = await screen.findByRole('dialog')
+    expect(await within(dialog).findByRole('checkbox', { name: /Order the cake/ })).toBeChecked()
+    expect(within(dialog).queryByRole('checkbox', { name: /Book the venue/ })).not.toBeInTheDocument()
+
+    await user.click(within(dialog).getByRole('checkbox', { name: /Buy return gifts/ }))
+    await user.click(within(dialog).getByRole('button', { name: 'Add 1 task' }))
+    expect(await screen.findByRole('checkbox', { name: 'Order the cake' })).toBeInTheDocument()
+    expect(db.tasks.some((t) => t.title === 'Buy return gifts')).toBe(false)
+  })
+
+  it('edits the event-day schedule as a new plan version', async () => {
+    const { user } = renderApp('/events/evt-birthday/timeline')
+    await user.click(await screen.findByRole('button', { name: 'Edit schedule' }))
+    await user.click(screen.getByRole('button', { name: 'Add item' }))
+    await user.type(screen.getByLabelText('Time for item 3'), '15:00')
+    await user.type(screen.getByLabelText('Activity for item 3'), 'Decorator arrives')
+    await user.click(screen.getByRole('button', { name: 'Save schedule' }))
+
+    expect(await screen.findByText('Decorator arrives')).toBeInTheDocument()
+    const saved = db.plans.get('evt-birthday')!
+    expect(saved.version).toBe(2)
+    expect(saved.plan.schedule[0]).toEqual({ time: '15:00', activity: 'Decorator arrives' })
+  })
+
+  it('fills the editor from a tone template and offers WhatsApp and email sharing', async () => {
+    const { user } = renderApp('/events/evt-birthday/invitation')
+    await user.click(await screen.findByLabelText(/^formal/i))
+    await user.click(screen.getByRole('button', { name: 'Use formal template' }))
+    expect((screen.getByLabelText('Invitation text') as HTMLTextAreaElement).value).toContain('You are cordially invited to Anaya')
+    expect(screen.getByRole('link', { name: /WhatsApp/ })).toHaveAttribute('href', expect.stringMatching(/^https:\/\/wa\.me\/\?text=You%20are%20cordially/))
+    expect(screen.getByRole('link', { name: 'Email' })).toHaveAttribute('href', expect.stringMatching(/^mailto:\?subject=Anaya/))
+  })
+})

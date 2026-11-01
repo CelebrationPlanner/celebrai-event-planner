@@ -22,6 +22,7 @@ export const keys = {
   budget: (id: string) => ['event', id, 'budget'] as const,
   tasks: (id: string) => ['event', id, 'tasks'] as const,
   conversation: (id: string) => ['event', id, 'conversation'] as const,
+  suggestions: (id: string) => ['event', id, 'suggestions'] as const,
 }
 
 export const useDashboard = () => useQuery({ queryKey: keys.dashboard, queryFn: api.dashboard })
@@ -31,6 +32,9 @@ export const usePlan = (id: string) => useQuery({ queryKey: keys.plan(id), query
 export const useBudget = (id: string) => useQuery({ queryKey: keys.budget(id), queryFn: () => api.budget(id) })
 export const useTasks = (id: string) => useQuery({ queryKey: keys.tasks(id), queryFn: () => api.tasks(id) })
 export const useConversation = (id: string) => useQuery({ queryKey: keys.conversation(id), queryFn: () => api.conversation(id), enabled: id !== '' })
+
+/** Engine suggestions (no AI). Fetched only when a review dialog opens. */
+export const useSuggestions = (id: string, enabled: boolean) => useQuery({ queryKey: keys.suggestions(id), queryFn: () => api.suggestions(id), enabled })
 
 /** After any change to an event, refresh everything derived from it (including the dashboard). */
 export function useRefreshEvent() {

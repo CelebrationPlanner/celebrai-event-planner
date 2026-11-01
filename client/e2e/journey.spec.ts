@@ -112,3 +112,54 @@ test('mobile: dashboard and event screens fit the viewport @mobile', async ({ pa
     expect(overflow, `horizontal overflow on ${path || 'overview'}`).toBeLessThanOrEqual(0)
   }
 })
+
+test('engine suggestions and plan editing work without AI', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Explore the demo' }).click()
+  await expect(page.getByText('Demo account.')).toBeVisible()
+
+  // A new outdoor event: suggested split and tasks come straight from the engine.
+  await page.goto('/events/new')
+  await page.getByLabel('Occasion').selectOption('anniversary')
+  await page.getByLabel('Event name').fill('Garden anniversary')
+  await page.getByLabel('Date').fill(inDays(8))
+  await page.getByRole('button', { name: 'Next' }).click()
+  await page.getByLabel('Guest count').fill('25')
+  await page.getByLabel('Total budget').fill('20000')
+  await page.getByText('outdoor', { exact: true }).click()
+  await page.getByRole('button', { name: 'Next' }).click()
+  await page.getByRole('button', { name: 'Next' }).click()
+  await page.getByRole('button', { name: 'Create event' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Garden anniversary' })).toBeVisible()
+
+  await page.getByRole('link', { name: 'Budget' }).click()
+  await page.getByRole('button', { name: 'Use suggested split' }).click()
+  const split = page.getByRole('dialog')
+  await expect(split.getByText('Outdoor venue')).toBeVisible()
+  await expect(split.getByRole('row', { name: /^Total/ })).toContainText('₹20,000')
+  await split.getByRole('button', { name: 'Apply this split' }).click()
+  // The engine allocated exactly the whole budget.
+  await expect(page.getByText('Unallocated').locator('..')).toHaveText('Unallocated₹0')
+
+  await page.getByRole('link', { name: 'Checklist' }).click()
+  await page.getByRole('button', { name: 'Suggest tasks' }).click()
+  const suggested = page.getByRole('dialog')
+  await expect(suggested.getByRole('checkbox', { name: /weather backup/i })).toBeChecked()
+  await suggested.getByRole('button', { name: /^Add \d+ tasks$/ }).click()
+  await expect(page.getByRole('checkbox', { name: /weather backup/i })).toBeVisible()
+  await expect(page.getByText(/^0 of (1[0-9]) done/)).toBeVisible()
+
+  // Plan editing on the sample event: the edited agenda is saved as a new version.
+  await page.goto('/dashboard')
+  await page.getByRole('link', { name: "Anaya's 5th Birthday (sample)" }).first().click()
+  await page.getByRole('link', { name: 'Timeline' }).click()
+  await page.getByRole('button', { name: 'Edit schedule' }).click()
+  await page.getByRole('button', { name: 'Add item' }).click()
+  const last = await page.getByRole('list', { name: 'Agenda items' }).getByRole('listitem').count()
+  await page.getByLabel(`Time for item ${last}`).fill('14:30')
+  await page.getByLabel(`Activity for item ${last}`).fill('Family photos before guests arrive')
+  await page.getByRole('button', { name: 'Save schedule' }).click()
+  await expect(page.getByText('Schedule saved as plan version 2')).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('listitem').filter({ hasText: 'Family photos before guests arrive' })).toContainText('14:30')
+})

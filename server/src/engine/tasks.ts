@@ -38,14 +38,15 @@ const TEMPLATES = (e: CelebrationEvent): Template[] => [
 /**
  * Builds the checklist with realistic deadlines: due dates are never before today or after
  * the event. Tasks whose ideal lead time no longer fits are due today and marked high priority.
- * Without an event date, tasks are left undated rather than invented.
+ * Without a (future) event date, tasks are left undated rather than invented.
  */
 export function planTasks(event: CelebrationEvent, analysis: Analysis, today: string): PlannedTask[] {
   const { flags, daysUntil } = analysis
   return TEMPLATES(event)
     .filter((t) => !t.when || t.when(flags))
     .map((t) => {
-      if (!event.eventDate || daysUntil === null) return { title: t.title, kind: t.kind, priority: t.priority, dueDate: null }
+      // No date, or a date already passed: leave undated rather than invent a deadline.
+      if (!event.eventDate || daysUntil === null || daysUntil < 0) return { title: t.title, kind: t.kind, priority: t.priority, dueDate: null }
       const lead = flags.wedding ? Math.min(t.lead * 3, 180) : t.lead
       const compressed = lead > daysUntil
       return {

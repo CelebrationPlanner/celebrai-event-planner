@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { Copy, LoaderCircle, Mail, Save, Share2, Sparkles, TriangleAlert } from 'lucide-react'
+import { Copy, FileText, LoaderCircle, Mail, MessageCircle, Save, Share2, Sparkles, TriangleAlert } from 'lucide-react'
 import { useId, useState } from 'react'
 import { toast } from 'sonner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -11,6 +11,7 @@ import { api, errorMessage } from '@/lib/api'
 import { useRefreshEvent } from '@/lib/queries'
 import { INVITATION_TONES, type InvitationTone } from '@/types'
 import { useEvent } from '../events/useEvent'
+import { invitationTemplate, shareLinks } from './templates'
 
 const MAX_LENGTH = 2000
 const TONE_HINT: Record<InvitationTone, string> = {
@@ -87,10 +88,15 @@ export default function InvitationPage() {
               ))}
             </div>
           </fieldset>
-          <Button variant="secondary" className="self-start" onClick={() => generate.mutate()} disabled={generate.isPending}>
-            {generate.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Sparkles aria-hidden="true" />}
-            {generate.isPending ? 'Writing…' : `Generate ${tone} invitation`}
+          <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setText(invitationTemplate(event, tone))}>
+            <FileText aria-hidden="true" /> Use {tone} template
           </Button>
+          <Button variant="secondary" onClick={() => generate.mutate()} disabled={generate.isPending}>
+            {generate.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Sparkles aria-hidden="true" />}
+            {generate.isPending ? 'Writing…' : `Write with AI`}
+          </Button>
+          </div>
           {generate.error && (
             <Alert variant="destructive" role="alert">
               <TriangleAlert aria-hidden="true" />
@@ -124,6 +130,20 @@ export default function InvitationPage() {
             <Button variant="outline" onClick={share} disabled={!text.trim()}>
               <Share2 aria-hidden="true" /> Share
             </Button>
+            {text.trim() && (
+              <>
+                <Button variant="outline" asChild>
+                  <a href={shareLinks(text, event.eventName).whatsapp} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle aria-hidden="true" /> WhatsApp<span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href={shareLinks(text, event.eventName).email}>
+                    <Mail aria-hidden="true" /> Email
+                  </a>
+                </Button>
+              </>
+            )}
           </div>
         </Card>
       </div>
