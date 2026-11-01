@@ -30,7 +30,7 @@ GEMINI_API_KEY=
 GEMINI_MODEL=gemini-flash-latest
 ANTHROPIC_API_KEY=
 CLAUDE_MODEL=claude-opus-5-5
-AI_TIMEOUT_MS=45000
+AI_TIMEOUT_MS=75000
 RATE_LIMIT_MAX_REQUESTS=10
 ```
 
@@ -44,7 +44,7 @@ RATE_LIMIT_MAX_REQUESTS=10
 | `CLAUDE_MODEL` | No | Claude model id (default `claude-opus-5-5`). |
 | `GEMINI_API_KEY` | When `AI_PROVIDER=gemini` | Server-only. Without it the API still runs and AI routes return `503 AI_UNAVAILABLE`. |
 | `GEMINI_MODEL` | No | Gemini model id or alias (default `gemini-flash-latest`). |
-| `AI_TIMEOUT_MS` | No | Overall deadline per AI call, including retries (default 45000, below the client's 60 s). Timeouts return `504 AI_TIMEOUT`. |
+| `AI_TIMEOUT_MS` | No | Overall deadline per AI call, including retries (default 75000, below the client's 90 s; full plans take ~35-40 s on Claude Opus 5.5). Timeouts return `504 AI_TIMEOUT`. |
 | `RATE_LIMIT_MAX_REQUESTS` | No | Per-user limit for AI routes within `RATE_LIMIT_WINDOW_MS` (default 10). |
 
 **The running API does not use `SUPABASE_SERVICE_ROLE_KEY`.** It is only needed by the integration tests, which read it from `npx supabase status` at runtime (`npm run test:integration -w server`). Never set it on Render.

@@ -24,7 +24,7 @@ export { ApiError }
 
 
 const BASE = import.meta.env.VITE_API_BASE_URL
-const AI_TIMEOUT_MS = 60_000
+const AI_TIMEOUT_MS = 90_000 // above the server's 75 s AI deadline, so the server's clear error arrives first
 const TIMEOUT_MS = 20_000 // generous: a sleeping free-tier backend can take a while to wake (D12)
 
 async function request<T>(method: string, path: string, body?: unknown, timeoutMs = TIMEOUT_MS): Promise<T> {

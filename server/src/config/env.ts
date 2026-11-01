@@ -25,8 +25,8 @@ const envSchema = z.object({
     .optional()
     .transform((v) => v || undefined), // blank (as in .env.example) = not configured
   GEMINI_MODEL: z.string().min(1).default('gemini-flash-latest'),
-  // Below the client's 60 s AI timeout; covers retries.
-  AI_TIMEOUT_MS: z.coerce.number().int().positive().default(45_000),
+  // Full plans take ~35-40 s on Claude Opus 5.5; stays below the client's 90 s AI timeout and covers retries.
+  AI_TIMEOUT_MS: z.coerce.number().int().positive().default(75_000),
 })
 
 export type Env = z.infer<typeof envSchema>
