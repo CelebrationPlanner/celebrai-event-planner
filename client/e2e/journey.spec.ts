@@ -7,6 +7,10 @@ import { expect, test, type Page } from '@playwright/test'
 const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10)
 
 async function expectNoAxeViolations(page: Page) {
+  // Scan the settled page: elements mid fade-in are translucent and would fail contrast checks.
+  await page.waitForFunction(() =>
+    document.getAnimations().every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity),
+  )
   // Real browser: colour contrast is checked here too.
   const { violations } = await new AxeBuilder({ page }).analyze()
   expect(violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([])
@@ -111,6 +115,61 @@ test('mobile: dashboard and event screens fit the viewport @mobile', async ({ pa
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
     expect(overflow, `horizontal overflow on ${path || 'overview'}`).toBeLessThanOrEqual(0)
   }
+})
+
+// Presses Tab until `target` has focus, so the test proves the control is reachable by keyboard.
+async function tabTo(page: Page, target: ReturnType<Page['getByRole']>, max = 60) {
+  for (let i = 0; i < max; i++) {
+    await page.keyboard.press('Tab')
+    if (await target.evaluate((el) => el === document.activeElement).catch(() => false)) return
+  }
+  throw new Error(`Not reachable with ${max} Tab presses: ${target}`)
+}
+
+const focusIsVisible = (page: Page) =>
+  page.evaluate(() => {
+    const style = getComputedStyle(document.activeElement as Element)
+    return style.outlineStyle !== 'none' || style.boxShadow !== 'none'
+  })
+
+test('keyboard: demo, skip link, event tabs and dialog focus without a mouse (A11Y-01)', async ({ page }) => {
+  await page.goto('/')
+  const demo = page.getByRole('button', { name: 'Explore the demo' })
+  await tabTo(page, demo)
+  expect(await focusIsVisible(page)).toBe(true)
+  await page.keyboard.press('Enter')
+  await expect(page.getByText('Demo account.')).toBeVisible()
+
+  // The skip link is the first stop and moves the next Tab into the main content.
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused()
+  await page.keyboard.press('Enter')
+  await page.keyboard.press('Tab')
+  expect(await page.evaluate(() => document.getElementById('main')?.contains(document.activeElement))).toBe(true)
+
+  await tabTo(page, page.getByRole('main').getByRole('link', { name: "Anaya's 5th Birthday (sample)", exact: true }))
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('heading', { level: 1, name: "Anaya's 5th Birthday (sample)" })).toBeVisible()
+  await tabTo(page, page.getByRole('link', { name: 'Budget', exact: true }))
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/budget$/)
+
+  // A dialog keeps focus inside while open and returns it to its trigger on Escape.
+  const edit = page.getByRole('button', { name: 'Edit Venue' })
+  await tabTo(page, edit)
+  expect(await focusIsVisible(page)).toBe(true)
+  await page.keyboard.press('Enter')
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  for (let i = 0; i < 12; i++) {
+    expect(await dialog.evaluate((el) => el.contains(document.activeElement))).toBe(true)
+    await page.keyboard.press('Tab')
+  }
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+  await expect(edit).toBeFocused()
 })
 
 test('engine suggestions and plan editing work without AI', async ({ page }) => {

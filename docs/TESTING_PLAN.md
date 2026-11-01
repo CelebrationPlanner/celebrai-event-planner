@@ -124,6 +124,39 @@ Expected:
 - User can review suggested reductions.
 - The backend never silently changes the budget.
 
+## 4a. Where each case is tested
+
+Every matrix row and scenario above maps to automated tests (`int` = integration tests against a real local Supabase with two real users).
+
+| ID / scenario | Test |
+|---|---|
+| AUTH-01 Sign up | `client/e2e/journey.spec.ts` main journey (real sign-up); `client/src/app/app.test.tsx` › validates the signup form before contacting the server |
+| AUTH-02 Login | `app.test.tsx` › sends signed-out visitors to login and back to where they were going |
+| AUTH-03 No token | `server/src/app.test.ts` › authentication gate (AUTH-03 / AUTH-04) |
+| AUTH-04 Invalid token | `app.test.ts` › authentication gate; `server/src/api.int.test.ts` › rejects a well-formed token with a forged signature |
+| EVT-01, EVT-02, EVT-04 | `api.int.test.ts` › events (EVT-01, EVT-02, EVT-04) |
+| EVT-03 Another user's event | `api.int.test.ts` › cross-user isolation (Scenario 10 / EVT-03) and database-level protection (RLS + composite foreign keys) |
+| AI-01 Structured plan | `server/src/planner.int.test.ts` › generates and saves a plan whose numbers come from the engine; `server/src/ai/claude.test.ts`, `gemini.test.ts` |
+| AI-02 Missing date | `planner.int.test.ts` › asks for missing details instead of calling the model; `server/src/engine/engine.test.ts` › Scenario 7 |
+| AI-03 Malformed JSON | `planner.int.test.ts` › rejects malformed model output and saves nothing; `server/src/ai/ai.test.ts` |
+| AI-04 Provider timeout | `planner.int.test.ts` › maps provider timeouts and outages to safe errors |
+| BUD-01 Balanced | `shared/src/shared.test.ts` › balances when allocations equal the budget |
+| BUD-02 Overrun | `shared.test.ts` and `api.int.test.ts` › reports the exact overrun and never changes the budget |
+| BUD-03 Negative amount | `api.int.test.ts` › rejects negative, fractional, unsafe and duplicate amounts; `app.test.tsx` › rejects negative amounts before sending |
+| BUD-04 Rounding remainder | `engine.test.ts` › always sums exactly to the budget, for awkward amounts and every rule combination; `shared.test.ts` › stays exact at the safe-integer boundary |
+| TASK-01 Complete task | `api.int.test.ts` › tasks (TASK-01); `app.test.tsx` › Checklist |
+| INV-01 Invitation | `api.int.test.ts` › saves the invitation text and tone; `planner.int.test.ts` (invitation generation); `client/src/features/invitations/templates.test.ts`; `app.test.tsx` › Invitation studio |
+| UI-01 Mobile viewport | `journey.spec.ts` › mobile: dashboard and event screens fit the viewport |
+| A11Y-01 Keyboard | `journey.spec.ts` › keyboard: demo, skip link, event tabs and dialog focus without a mouse |
+| Scenario A (birthday, ₹30,000, outdoor) | `engine.test.ts` › Scenario 1; `planner.int.test.ts` › Scenario 1 |
+| Scenario B (wedding, ₹5,00,000) | `engine.test.ts` › Scenario 2 |
+| Scenario C (anniversary, ₹15,000) | `engine.test.ts` › Scenario 3 |
+| Scenario D (₹5,000 budget) | `engine.test.ts` › Scenario 4 |
+| Scenario E (incomplete context) | `engine.test.ts` › Scenario 7; `planner.int.test.ts` › asks only for what is missing, then remembers earlier answers; `app.test.tsx` › shows follow-up questions |
+| Scenario F (overrun ₹20,000 vs ₹24,000) | `shared.test.ts`, `api.int.test.ts` › Scenario 9; `journey.spec.ts` main journey (UI warning) |
+
+Accessibility checks (§8) are automated by axe in `client/src/app/a11y.test.tsx` (12 screens) and in real Chromium in `journey.spec.ts` (including colour contrast); focus visibility and dialog focus are asserted by the keyboard test.
+
 ## 5. Unit tests
 
 Test pure functions independently:
