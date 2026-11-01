@@ -25,3 +25,6 @@ supabase/.temp
 
 # Local Claude Code tooling (preview launch config)
 .claude/
+
+# Never commit stray local text files that may hold secrets
+/server/New Text Document.txt

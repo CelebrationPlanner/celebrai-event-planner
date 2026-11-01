@@ -1,0 +1,28 @@
+# API (Express) on Render. Values marked sync: false are entered in the Render dashboard,
+# never committed. The service-role key is intentionally absent: the API runs every query as
+# the signed-in user so Row Level Security always applies.
+services:
+  - type: web
+    name: celebrai-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build -w server
+    startCommand: npm start -w server
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: AI_PROVIDER
+        value: claude
+      - key: CLAUDE_MODEL
+        value: claude-opus-5-5
+      - key: CLIENT_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false

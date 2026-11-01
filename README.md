@@ -1,92 +1,137 @@
 # CelebrAI – Smart Celebration & Event Planner
 
-**Hack2Skills Challenge 5 · Celebration and Event Planner**
+**Hack2Skills Challenge 5 · Vertical: Celebration and Event Planner**
 
-CelebrAI is a full-stack AI-assisted event-planning application. It helps users turn an occasion, date, location, guest count, budget, and preferences into an actionable event plan.
+CelebrAI turns a sentence like *"My daughter's 5th birthday in Pune for 40 guests, ₹25,000, she loves princesses, in 12 days"* into a complete, editable plan: theme, budget split, prioritised checklist, timeline, event-day schedule, risks and an invitation — and explains **why** it recommends each thing.
 
-> Status: Project specification and implementation documentation. Update deployment URLs, screenshots, and implementation status only after verifying the running application.
+- **Live app:** _added after deployment_
+- **API health:** _added after deployment_
+- **Try it without an account:** press **Explore the demo** on the landing page (an isolated, temporary account with a sample event).
 
-## Project goals
+---
 
-- Understand event requirements expressed in natural language.
-- Ask follow-up questions when essential information is missing.
-- Generate structured, context-aware event plans.
-- Validate budgets deterministically in the backend.
-- Let users save and edit plans, expenses, tasks, timelines, and invitations.
-- Clearly identify estimates, assumptions, and unverified information.
+## The approach: deterministic engine + AI
 
-## Challenge vertical
+The core design decision is to split every planning decision into two kinds and never let the AI decide the kind that must be right.
 
-**Celebration and Event Planner**
-
-## Recommended stack
-
-| Layer | Technology |
+| Decided by the backend engine (`server/src/engine/`) | Written by the AI (`server/src/ai/`) |
 |---|---|
-| Frontend | React, Vite, TypeScript |
-| UI | Tailwind CSS, Shadcn UI, Lucide React |
-| Motion and charts | Framer Motion, Recharts |
-| Backend | Node.js, Express, TypeScript |
-| Validation | Zod |
-| AI | Gemini API behind a provider interface |
-| Database and auth | Supabase PostgreSQL and Supabase Auth |
-| Testing | Vitest, React Testing Library, Supertest, Playwright |
-| Hosting | Vercel (frontend), Render (API), Supabase (database/auth) |
+| Which details are missing and what to ask | A friendly acknowledgement of what the user said |
+| Which planning rules apply (table below) | Theme, tailored to preferences, with reasoning |
+| Budget split per category, in exact integer paise | Recommendations: what, why, assumptions |
+| Checklist and deadlines (never past, never after the event) | Event-day agenda, extra risks and tasks |
+| Fixed assumptions (estimates ≠ quotes; availability unverified) | Invitation wording in four tones |
 
-Claude Code is the AI-assisted development environment. The deployed application uses a separately configured AI provider; do not confuse the coding agent with the runtime AI service.
+The AI returns structured JSON validated with Zod; the backend then fills in every cost and date from the engine and validates the merged plan again before saving. Arithmetic, dates, permissions and validation never depend on the model.
 
-## Main features
+### Decision rules (logical decision-making)
 
-1. Dashboard and event management.
-2. Event creation wizard.
-3. AI event assistant and structured plan generation.
-4. Budget allocation and expense tracking.
-5. Theme and activity recommendations.
-6. Preparation checklist and event-day timeline.
-7. Invitation text generator.
-8. Authentication and per-user data isolation.
+| Rule | Trigger | What the plan does |
+|---|---|---|
+| Tight budget | Budget per guest below ₹400 / $15 / €15 / £12 (×3 for weddings) | Food and space first; photography, entertainment, décor and printed invitations scaled back; "ask a friend for photos" replaces a photographer |
+| Large guest count | ≥ 150 guests | More budget to food and venue; venue capacity flagged *to verify* |
+| Outdoor venue | Outdoor preference | Extra contingency; weather-backup task and risk |
+| Children attending | Children/teens age group or a 1st–12th birthday | Age-appropriate entertainer, larger entertainment share, supervision risk |
+| Short notice / urgent | ≤ 14 days / ≤ 3 days | Compressed deadlines due today and marked high priority; rush buffer |
+| Dietary requirements | Any listed | Dedicated caterer task and risk naming each requirement |
+| Missing details | No occasion, date, guest count or budget | Asks follow-up questions; generation returns a clarification instead of calling the AI |
 
-## Repository structure
+The budget split starts from a documented default (venue 20%, food 30%, décor 15%, photography 10%, entertainment 10%, invitations 3%, miscellaneous 2%, contingency 10%), applies the rule transfers in basis points, and distributes rounding remainders deterministically, so categories **always sum exactly** to the budget (BigInt-safe up to `Number.MAX_SAFE_INTEGER`). Every decision is shown to the user under **"How CelebrAI decided"**.
+
+### Context understanding
+
+The assistant extracts facts from natural language ("in 12 days" → a date, "5 lakh" → ₹5,00,000) into the event record itself. Each extracted field is validated on its own; anything invalid, injected or in the past is dropped, never saved. Follow-up questions come from the backend's list of what is still missing, so the assistant **never re-asks** for something the user already said.
+
+---
+
+## Features
+
+- **Landing page** with event examples, how it works and a working demo.
+- **Authentication** (Supabase Auth): sign up, log in, log out, session restore, protected routes, and an isolated **anonymous demo** that can be upgraded to a real account without losing data.
+- **Dashboard**: upcoming events, total budget, active/completed tasks, progress, recent activity.
+- **Create-event wizard** with step validation, plus **edit** and **delete**.
+- **AI assistant**: natural-language intake, follow-up questions, conversation history, plan generation, regeneration, and schedule editing (saved as a new plan version).
+- **Smart budget planner**: estimates vs actuals, remaining/overrun from the server, chart with a text summary, warnings, cost-saving ideas, and an engine **suggested split** applied only after review.
+- **Checklist**: add, edit, complete, filter, delete with undo, priorities, due dates, progress, and engine **suggested tasks** without AI.
+- **Timeline**: dated preparation milestones (vendor, invitation, shopping) and the event-day agenda.
+- **Invitation studio**: formal, friendly, traditional and modern tones (AI or built-in templates), editing, preview, copy, share, WhatsApp and email.
+
+---
+
+## Architecture
 
 ```text
-celebrai-event-planner/
-├── package.json        # npm workspaces
-├── client/             # React + Vite SPA
-├── server/             # Express API
-├── shared/             # Zod schemas, money/date/budget logic shared by client and server
-├── supabase/
-│   └── migrations/
-├── docs/
-├── README.md
-└── .gitignore
+Browser (React + Vite + TypeScript, Netlify)
+   │  HTTPS + Supabase access token
+   ▼
+Express API (TypeScript, Render) ──► AI provider (Claude or Gemini, server-side only)
+   │  user-scoped Supabase client per request
+   ▼
+Supabase Postgres + Auth (Row Level Security on every table)
 ```
 
-See the files in `docs/` for the product specification, architecture, Claude Code prompts, testing plan, deployment guide, and submission checklist.
+- `client/` – React 19, Tailwind v4, shadcn/ui, TanStack Query, Recharts, Motion.
+- `server/` – Express 5, Zod, engine, AI providers, REST modules.
+- `shared/` – Zod schemas, money/date helpers and budget maths shared by client and server.
+- `supabase/migrations/` – schema, constraints, indexes, RLS, transactional plan save.
+
+Provider-neutral AI: business logic depends only on an `AIProvider` interface; `AI_PROVIDER=claude|gemini` selects the implementation. Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+---
+
+## Security
+
+- **Ownership enforced three ways:** API filters by the verified user id; every request runs as the signed-in user so **RLS** applies; child tables carry a composite foreign key `(event_id, user_id)` so rows can't attach to another user's event. Other users' resources return **404** (no existence disclosure).
+- **No service-role key in the running API**; AI keys exist only on the server.
+- **Validation everywhere:** strict Zod schemas (unknown fields such as `userId` rejected), database CHECK constraints mirroring API limits, 100 KB body limit, 2,000-char messages, bounded conversation history.
+- **AI safety:** system rules separate from user text; user text JSON-encoded inside one untrusted block; model output schema-validated; no tools or code execution; costs/dates never from the model.
+- **AI spend guards:** per-user and per-IP AI rate limits, daily quotas (lower for anonymous demo users) and a global daily cap that answers 503 without calling the provider.
+- **Transport:** helmet headers on the API, strict CSP on the frontend (`netlify.toml`), single-origin CORS, generic error messages, logs without bodies or tokens, open-redirect guard on login.
+- A focused security audit with three independent reviewers was run; its findings were fixed and tested (see commit history).
+
+---
+
+## Testing
+
+| Suite | What it covers | Command |
+|---|---|---|
+| Shared (Vitest) | Budget maths incl. safe-integer edge, time-zone dates, schema rules | `npm test -w shared` |
+| Server unit (Vitest + Supertest) | Engine scenarios 1–9, AI parser and prompt isolation, mocked Claude/Gemini SDKs, auth gate, headers, CORS, rate limits | `npm test -w server` |
+| Server integration (real local Supabase, two real users) | Cross-user isolation (Scenario 10), RLS, composite FKs, budget overrun, planner chat/generate/reuse, malformed AI output, timeouts, AI spend guards | `npm run test:integration -w server` |
+| Client (Vitest + Testing Library + axe) | Every screen against an in-memory backend; accessibility scan of 12 screens | `npm test -w client` |
+| End-to-end (Playwright + axe in a real browser) | Sign up → create → budget overrun → checklist → invitation → refresh persists → log out; demo; engine suggestions; mobile layout | `npm run test:e2e -w client` |
+
+The ten challenge scenarios (birthday ₹30,000; wedding ₹5,00,000; anniversary ₹15,000; birthday ₹5,000; outdoor weather; three days away; missing date and guests; malformed AI JSON; budget overrun; cross-user access) each have dedicated tests.
+
+---
+
+## Accessibility
+
+Labelled inputs with errors announced via `aria-describedby`, visible focus states, keyboard-operable controls, skip link, landmarks, charts with text summaries, colour pairs checked against WCAG AA, `prefers-reduced-motion` respected, and automated axe scans in unit and real-browser tests.
+
+---
+
+## Assumptions and limitations
+
+- Costs are **estimates** from typical prices, not vendor quotations.
+- Venue and vendor **availability is never claimed**; the plan says to confirm directly.
+- Weather and traffic are not fetched from live sources.
+- AI suggestions should be reviewed; amounts and dates come from the engine.
+- Money is stored as integer minor units (paise/cents); supported currencies: INR (default), USD, EUR, GBP.
+- In-memory rate-limit counters suit a single API instance.
+
+---
 
 ## Local setup
 
-Prerequisites: a supported Node.js LTS release, npm, Git, a Supabase project, and an AI provider API key.
-
-```bash
-git clone https://github.com/YOUR_USERNAME/celebrai-event-planner.git
-cd celebrai-event-planner
-```
-
-Install all workspaces from the repository root:
+Prerequisites: Node.js 22+, npm, Docker (for local Supabase).
 
 ```bash
 npm install
-```
-
-Start the local database and auth stack (requires Docker). This applies `supabase/migrations/`:
-
-```bash
 npx supabase start
 ```
 
-Create `client/.env` and `server/.env` from the corresponding `.env.example` files, using the URL and anon key printed by `npx supabase status`. `GEMINI_API_KEY` can stay blank: the app runs, and AI actions explain that the planner is unavailable. Never commit real credentials.
-
-Run the backend and frontend in separate terminals:
+Create `client/.env` and `server/.env` from the `.env.example` files using the URL and anon key from `npx supabase status`. Add `ANTHROPIC_API_KEY` (with `AI_PROVIDER=claude`) or `GEMINI_API_KEY` for AI features; without a key the app runs and AI actions explain that the planner is unavailable.
 
 ```bash
 npm run dev:server
@@ -95,56 +140,12 @@ npm run dev:client
 
 Checks: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`.
 
-Database integration tests (two real users, RLS and cross-user access) run against the local stack:
+## Documentation
 
-```bash
-npm run test:integration -w server
-```
-
-End-to-end tests (Playwright + axe in a real browser) start their own API and client against the local stack:
-
-```bash
-npm run test:e2e -w client
-```
-
-After changing a migration, regenerate the typed database client with `npm run db:types -w server`.
-
-## Security principles
-
-- Keep AI provider secrets and Supabase service-role credentials on the server only.
-- Verify authentication tokens on protected API routes.
-- Enforce ownership checks and Supabase Row Level Security.
-- Validate input and AI output with Zod.
-- Apply rate limits and request-size limits to AI endpoints.
-- Do not execute AI-generated code, SQL, or shell commands.
-- Do not claim vendor availability or live prices without verified integrations.
-- Avoid logging tokens, API keys, or unnecessary personal data.
-
-## Important assumptions and limitations
-
-- Budget values are estimates unless backed by verified quotations.
-- Venue and vendor availability must be independently confirmed unless a trusted live integration is implemented.
-- AI suggestions may be incomplete or incorrect; users should review plans.
-- Weather and other changing conditions require a reliable external data source.
-- The initial release should prioritize a reliable core workflow over integrations that are not necessary for the challenge.
-
-## Testing
-
-See [`docs/TESTING_PLAN.md`](docs/TESTING_PLAN.md). At minimum, test authentication, event ownership, AI schema validation, budget arithmetic, task persistence, and the end-to-end event-planning journey.
-
-## Deployment
-
-See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md). Verify the live frontend, API, database policies, and a complete user journey before publishing deployment links.
-
-## Submission links
-
-- Live application: _Add verified URL_
-- Backend API: _Add verified URL_
-- Public GitHub repository: _Add URL_
+[Product specification](docs/PROJECT_SPECIFICATION.md) · [Architecture and decisions](docs/ARCHITECTURE.md) · [Testing plan](docs/TESTING_PLAN.md) · [Deployment](docs/DEPLOYMENT.md) · [Environment variables](docs/ENVIRONMENT_VARIABLES.md) · [Submission checklist](docs/SUBMISSION_CHECKLIST.md)
 
 ## Author
 
-Ashutosh Gaikwad  
-GitHub: https://github.com/gaikwadashutosh35
+Ashutosh Gaikwad · GitHub: [gaikwadashutosh35](https://github.com/gaikwadashutosh35)
 
 **CelebrAI — Plan Better. Celebrate Smarter.**
