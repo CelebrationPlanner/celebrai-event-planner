@@ -6,6 +6,7 @@ CelebrAI turns a sentence like *"My daughter's 5th birthday in Pune for 40 guest
 
 - **Live app:** https://celebrai-planner.netlify.app
 - **API health:** https://celebrai-api-jd3j.onrender.com/api/health (free tier: the first request after idle can take ~50 s)
+- **Repository:** https://github.com/CelebrationPlanner/celebrai-event-planner
 - **Try it without an account:** press **Explore the demo** on the landing page (an isolated, temporary account with a sample event).
 
 ---
@@ -87,7 +88,7 @@ Provider-neutral AI: business logic depends only on an `AIProvider` interface; `
 - **AI safety:** system rules separate from user text; user text JSON-encoded inside one untrusted block; model output schema-validated; no tools or code execution; costs/dates never from the model.
 - **AI spend guards:** per-user and per-IP AI rate limits, daily quotas (lower for anonymous demo users) and a global daily cap that answers 503 without calling the provider.
 - **Transport:** helmet headers on the API, strict CSP on the frontend (`netlify.toml`), single-origin CORS, generic error messages, logs without bodies or tokens, open-redirect guard on login.
-- A focused security audit with three independent reviewers was run; its findings were fixed and tested (see commit history).
+- A focused security audit with three independent reviewers was run; its findings were fixed and tested. Findings, fixes and accepted residual risks: [docs/SECURITY_AND_QA_REPORT.md](docs/SECURITY_AND_QA_REPORT.md).
 
 ---
 
@@ -99,7 +100,7 @@ Provider-neutral AI: business logic depends only on an `AIProvider` interface; `
 | Server unit (Vitest + Supertest) | Engine scenarios 1–9, AI parser and prompt isolation, mocked Claude/Gemini SDKs, auth gate, headers, CORS, rate limits | `npm test -w server` |
 | Server integration (real local Supabase, two real users) | Cross-user isolation (Scenario 10), RLS, composite FKs, budget overrun, planner chat/generate/reuse, malformed AI output, timeouts, AI spend guards | `npm run test:integration -w server` |
 | Client (Vitest + Testing Library + axe) | Every screen against an in-memory backend; accessibility scan of 12 screens | `npm test -w client` |
-| End-to-end (Playwright + axe in a real browser) | Sign up → create → budget overrun → checklist → invitation → refresh persists → log out; demo; engine suggestions; mobile layout | `npm run test:e2e -w client` |
+| End-to-end (Playwright + axe in a real browser) | Sign up → create → budget overrun → checklist → invitation → refresh persists → log out; demo; keyboard-only navigation and dialog focus; engine suggestions; mobile layout | `npm run test:e2e -w client` |
 
 The ten challenge scenarios (birthday ₹30,000; wedding ₹5,00,000; anniversary ₹15,000; birthday ₹5,000; outdoor weather; three days away; missing date and guests; malformed AI JSON; budget overrun; cross-user access) each have dedicated tests.
 
@@ -142,7 +143,7 @@ Checks: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`.
 
 ## Documentation
 
-[Product specification](docs/PROJECT_SPECIFICATION.md) · [Architecture and decisions](docs/ARCHITECTURE.md) · [Testing plan](docs/TESTING_PLAN.md) · [Deployment](docs/DEPLOYMENT.md) · [Environment variables](docs/ENVIRONMENT_VARIABLES.md) · [Submission checklist](docs/SUBMISSION_CHECKLIST.md)
+[Product specification](docs/PROJECT_SPECIFICATION.md) · [Architecture and decisions](docs/ARCHITECTURE.md) · [Testing plan](docs/TESTING_PLAN.md) · [Deployment](docs/DEPLOYMENT.md) · [Environment variables](docs/ENVIRONMENT_VARIABLES.md) · [Security and QA report](docs/SECURITY_AND_QA_REPORT.md) · [Submission checklist](docs/SUBMISSION_CHECKLIST.md)
 
 ## Author
 
