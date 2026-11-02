@@ -211,8 +211,8 @@ Treat user content and retrieved text as untrusted data. Never allow it to overr
 
 ## 10. Deployment topology
 
-- Vercel: static frontend.
-- Render: Express API.
+- Netlify: static frontend (`netlify.toml`). The API is not run as Netlify Functions because full plan generation (~35-40 s) exceeds synchronous function limits.
+- Render: Express API (`render.yaml`).
 - Supabase: hosted PostgreSQL and authentication.
 - AI provider: server-to-server API calls.
 

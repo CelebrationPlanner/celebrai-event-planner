@@ -32,6 +32,10 @@ ANTHROPIC_API_KEY=
 CLAUDE_MODEL=claude-opus-5-5
 AI_TIMEOUT_MS=75000
 RATE_LIMIT_MAX_REQUESTS=10
+AI_RATE_LIMIT_PER_IP=20
+AI_DAILY_LIMIT_PER_USER=50
+AI_DAILY_LIMIT_ANONYMOUS=10
+AI_DAILY_LIMIT_TOTAL=1000
 ```
 
 | Variable | Required | Notes |
@@ -46,6 +50,11 @@ RATE_LIMIT_MAX_REQUESTS=10
 | `GEMINI_MODEL` | No | Gemini model id or alias (default `gemini-flash-latest`). |
 | `AI_TIMEOUT_MS` | No | Overall deadline per AI call, including retries (default 75000, below the client's 90 s; full plans take ~35-40 s on Claude Opus 5.5). Timeouts return `504 AI_TIMEOUT`. |
 | `RATE_LIMIT_MAX_REQUESTS` | No | Per-user limit for AI routes within `RATE_LIMIT_WINDOW_MS` (default 10). |
+| `AI_RATE_LIMIT_PER_IP` | No | AI calls per client IP within `RATE_LIMIT_WINDOW_MS` (default 20), so creating many demo users from one IP cannot multiply the per-user limit. |
+| `AI_DAILY_LIMIT_PER_USER` / `AI_DAILY_LIMIT_ANONYMOUS` | No | AI calls per user per day: accounts (default 50) and anonymous demo users (default 10). Over the limit returns 429. |
+| `AI_DAILY_LIMIT_TOTAL` | No | AI calls per day across all users (default 1000), a hard cap on provider spend. Over the cap returns `503 AI_UNAVAILABLE` without calling the provider. |
+
+The production values (Render) are set by `render.yaml`: `NODE_ENV=production`, `AI_PROVIDER=claude`, `CLAUDE_MODEL=claude-opus-5-5`; `CLIENT_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `ANTHROPIC_API_KEY` are entered in the Render dashboard. The frontend values (Netlify) are entered in Netlify's environment settings. Everything else uses the defaults above.
 
 **The running API does not use `SUPABASE_SERVICE_ROLE_KEY`.** It is only needed by the integration tests, which read it from `npx supabase status` at runtime (`npm run test:integration -w server`). Never set it on Render.
 

@@ -79,13 +79,16 @@ Accessibility: labelled inputs with errors linked by `aria-describedby`, visible
 |---|---|
 | Frontend reachable publicly | Pass – HTTP 200 for `/` and deep links |
 | API health | Pass – `{"status":"ok"}` |
-| CORS | Pass – preflight from the Netlify origin allowed |
-| Demo / anonymous sign-in | Pass – dashboard and sample event load |
+| CORS | Pass – only the Netlify origin is allowed |
+| Demo / anonymous sign-in, session restore | Pass |
 | AI assistant (live Claude) | Pass – extracted occasion, city, guests and budget; asked only for the date |
+| Full AI plan generation (live Claude) | Pass – 200 in 35 s, plan saved and fetched |
+| Event creation, budget overrun, task update, persistence after refresh | Pass |
+| Cross-user access | Pass – a second demo user got API 404 and "Event not found"; RLS enabled on all hosted tables |
+| Logout, mobile layout, logs | Pass |
 | Email sign-up / login | Not run on production (email confirmation is on); covered by e2e against local Supabase |
-| Full AI plan generation | Run against live Claude from a local API during development; not repeated on production |
-| Budget / task update, persistence after refresh | Covered by e2e; not repeated by hand on production |
-| Cross-user access | Covered by integration tests; RLS verified enabled on all hosted tables and the anonymous role denied |
+
+Full record: [DEPLOYMENT.md §9](DEPLOYMENT.md#9-deployment-record).
 
 **Known limitations:** costs are estimates, venue/vendor availability is never claimed, the free Render instance sleeps when idle (first request can take ~50 s), and rate-limit counters are in memory (single instance).
 

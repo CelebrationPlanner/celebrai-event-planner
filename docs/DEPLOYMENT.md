@@ -4,8 +4,8 @@
 
 | Service | Responsibility |
 |---|---|
-| Vercel | React frontend |
-| Render | Express API |
+| Netlify | React frontend (static build, `netlify.toml`) |
+| Render | Express API (`render.yaml` blueprint) |
 | Supabase | PostgreSQL and authentication |
 | AI provider | Server-side model API |
 
@@ -32,9 +32,7 @@ Do not expose the service-role key to the browser. If the backend uses it, keep 
 
 ## 4. Render backend setup
 
-Create a web service connected to the GitHub repository.
-
-Typical settings (npm workspaces; the lockfile is at the repository root):
+Create a **Blueprint** from the GitHub repository: Render reads `render.yaml` and creates the `celebrai-api` web service with these settings (npm workspaces; the lockfile is at the repository root):
 - Root directory: _(blank — repository root)_
 - Build command: `npm ci && npm run build -w server`
 - Start command: `npm start -w server`
@@ -45,7 +43,7 @@ Backend environment variables:
 ```env
 NODE_ENV=production
 PORT=10000
-CLIENT_URL=https://YOUR-FRONTEND.vercel.app
+CLIENT_URL=https://YOUR-SITE.netlify.app
 
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
@@ -62,7 +60,7 @@ API_RATE_LIMIT_MAX_REQUESTS=120
 
 Do not set `SUPABASE_SERVICE_ROLE_KEY` on Render: the API runs every query as the signed-in user (see ARCHITECTURE.md D9).
 
-Use the port supplied by the hosting platform if required. Never commit these values.
+`render.yaml` fixes `NODE_ENV`, `AI_PROVIDER` and `CLAUDE_MODEL`; the Blueprint form asks for `CLIENT_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `ANTHROPIC_API_KEY` (marked `sync: false`, so they are never in the repository). Render supplies `PORT`. Rate-limit and AI quota variables use the defaults in ENVIRONMENT_VARIABLES.md unless overridden. Never commit these values.
 
 After deployment:
 - Verify `/api/health`.
@@ -71,17 +69,17 @@ After deployment:
 - Verify CORS allows only intended origins.
 - Verify rate limits and safe error responses.
 
-## 5. Vercel frontend setup
+## 5. Netlify frontend setup
 
-Import the repository into Vercel.
+Import the repository into Netlify (Add new project → Import from GitHub). `netlify.toml` at the repository root supplies everything else:
+- Build command: `npm run build -w client` (Node 22)
+- Publish directory: `client/dist`
+- SPA rewrite: every path serves `index.html`
+- Security headers: strict Content-Security-Policy (API and Supabase origins only in `connect-src`), `X-Frame-Options: DENY`, `nosniff`, referrer and permissions policies
 
-Typical settings:
-- Root directory: `client`
-- Framework preset: Vite
-- Build command: `npm run build`
-- Output directory: `dist`
+The API is not deployed as Netlify Functions: full AI plan generation takes ~35-40 s, longer than synchronous serverless function limits. New Netlify projects may start **private**; use **Make public** so judges and users can open the site.
 
-Frontend environment variables:
+Frontend environment variables (Netlify → Project configuration → Environment variables):
 
 ```env
 VITE_API_BASE_URL=https://YOUR-BACKEND.onrender.com/api
@@ -91,7 +89,7 @@ VITE_SUPABASE_ANON_KEY=
 
 Only public browser-safe Supabase values belong in frontend variables. Never use a `VITE_` prefix for secrets.
 
-Configure SPA route rewrites if the deployed router requires them. Set the production authentication redirect URLs in Supabase.
+In Supabase → Authentication → URL Configuration, set the **Site URL** to the Netlify URL and add `https://YOUR-SITE.netlify.app/**` to the redirect URLs. Keep **anonymous sign-ins** enabled for the demo.
 
 ## 6. CORS and URLs
 
@@ -142,23 +140,34 @@ Check the hosting plan's current behavior. Display a loading state and use sensi
 ## 9. Deployment record
 
 ```text
-Frontend URL:
-Backend URL:
-GitHub URL:
-Supabase project:
-Deployment commit:
-Date verified:
-
-Signup/login:
-Event CRUD:
-AI generation:
-Budget update:
-Task update:
-Persistence:
-Cross-user authorization:
-Mobile check:
-
-Known limitations:
+Frontend URL:      https://celebrai-planner.netlify.app
+Backend URL:       https://celebrai-api-jd3j.onrender.com/api (health: /api/health)
+GitHub URL:        https://github.com/CelebrationPlanner/celebrai-event-planner
+Supabase project:  hosted, Mumbai region; 3 migrations applied; RLS on all 6 tables
+Deployment commit: c71e79d
+Date verified:     2 Nov 2026
 ```
+
+Checks from §7, run against the live URLs with a scripted browser and temporary demo (anonymous) accounts:
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Landing page loads | Pass |
+| 2 | Signup and login | Demo sign-in: pass. Email sign-up/login: not run on production (email confirmation is on); covered by the e2e journey against local Supabase, same code |
+| 3 | Session restoration | Pass – session survives a reload, including a session saved by the previous release |
+| 4 | Event created and retrieved | Pass |
+| 5 | AI plan generation | Pass – `POST …/planner/generate` 200 in 35 s with Claude, plan saved and fetched |
+| 6 | Invalid AI output rejected | Not triggerable against the real model; covered by `planner.int.test.ts` (Scenario 8) |
+| 7 | Budget update persisted and recalculated | Pass – server reported "Over budget by ₹1,000" |
+| 8 | Checklist update persisted | Pass |
+| 9 | Data retained after refresh | Pass |
+| 10 | Second user blocked from first user's event | Pass – API 404 and "Event not found" screen |
+| 11 | Logout removes access | Pass – protected route redirects to login |
+| 12 | Mobile layout | Pass – no horizontal overflow (Pixel 7) |
+| 13 | Logs reveal no secrets or private content | Pass – Render logs show method, path, status and duration only |
+
+Also verified: CORS preflight allows only the Netlify origin; security headers present on both hosts (CSP, HSTS, frame blocking); `main` is the only branch.
+
+Known limitations: the free Render instance sleeps when idle (first request after a quiet period takes ~50 s); rate-limit counters are in memory (single instance); costs are estimates and venue availability is never claimed.
 
 Only publish URLs and status claims after verifying them.
