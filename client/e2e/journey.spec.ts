@@ -53,7 +53,10 @@ test('sign up → create event → budget → checklist → invitation → refre
   // Budget: set up categories, then push allocations over the budget.
   await page.getByRole('link', { name: 'Budget' }).click()
   await page.getByRole('button', { name: 'Set up categories manually' }).click()
-  for (const [category, amount] of [['Venue', '9000'], ['Food & catering', '7000']]) {
+  for (const [category, amount] of [
+    ['Venue', '9000'],
+    ['Food & catering', '7000'],
+  ]) {
     await page.getByRole('button', { name: `Edit ${category}` }).click()
     await page.getByRole('dialog').getByLabel('Estimated').fill(amount)
     await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click()
@@ -110,7 +113,15 @@ test('mobile: dashboard and event screens fit the viewport @mobile', async ({ pa
   for (const path of ['', '/budget', '/checklist', '/timeline', '/invitation', '/planner']) {
     await page.getByRole('button', { name: 'Open menu' }).click()
     await page.getByRole('link', { name: "Anaya's 5th Birthday (sample)" }).click()
-    if (path) await page.getByRole('link', { name: path.slice(1).replace(/^./, (c) => c.toUpperCase()).replace('Planner', 'Assistant') }).click()
+    if (path)
+      await page
+        .getByRole('link', {
+          name: path
+            .slice(1)
+            .replace(/^./, (c) => c.toUpperCase())
+            .replace('Planner', 'Assistant'),
+        })
+        .click()
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
     expect(overflow, `horizontal overflow on ${path || 'overview'}`).toBeLessThanOrEqual(0)
@@ -220,5 +231,7 @@ test('engine suggestions and plan editing work without AI', async ({ page }) => 
   await page.getByRole('button', { name: 'Save schedule' }).click()
   await expect(page.getByText('Schedule saved as plan version 2')).toBeVisible()
   await page.reload()
-  await expect(page.getByRole('listitem').filter({ hasText: 'Family photos before guests arrive' })).toContainText('14:30')
+  await expect(page.getByRole('listitem').filter({ hasText: 'Family photos before guests arrive' })).toContainText(
+    '14:30',
+  )
 })

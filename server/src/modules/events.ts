@@ -1,4 +1,12 @@
-import { eventCreateSchema, eventPlanSchema, eventUpdateSchema, invitationSchema, paginationSchema, scheduleUpdateSchema, type EventUpdate } from '@celebrai/shared'
+import {
+  eventCreateSchema,
+  eventPlanSchema,
+  eventUpdateSchema,
+  invitationSchema,
+  paginationSchema,
+  scheduleUpdateSchema,
+  type EventUpdate,
+} from '@celebrai/shared'
 import { Router } from 'express'
 import type { Database } from '../db/database.types.ts'
 import { toEvent } from '../db/mappers.ts'
@@ -43,7 +51,13 @@ eventsRouter.post('/events', async (req, res) => {
   const { db, userId } = getAuth(req)
   const input = eventCreateSchema.parse(req.body)
   assertNotPast(input.eventDate, await userToday(db, userId), 'eventDate')
-  const row = unwrap(await db.from('events').insert({ ...toColumns(input), event_name: input.eventName, budget_minor: input.budgetMinor, user_id: userId }).select().single())
+  const row = unwrap(
+    await db
+      .from('events')
+      .insert({ ...toColumns(input), event_name: input.eventName, budget_minor: input.budgetMinor, user_id: userId })
+      .select()
+      .single(),
+  )
   res.status(201).json({ data: toEvent(row) })
 })
 
@@ -61,15 +75,20 @@ eventsRouter.patch('/events/:id', async (req, res) => {
   const status = patch.status ?? current.status
   const occasion = patch.occasion === undefined ? current.occasion : patch.occasion
   if (status !== 'draft' && !occasion) throw invalid('An occasion is required unless the event is a draft.', 'occasion')
-  if (patch.eventDate && patch.eventDate !== current.event_date) assertNotPast(patch.eventDate, await userToday(db, userId), 'eventDate')
+  if (patch.eventDate && patch.eventDate !== current.event_date)
+    assertNotPast(patch.eventDate, await userToday(db, userId), 'eventDate')
 
-  const row = unwrap(await db.from('events').update(toColumns(patch)).eq('id', id).eq('user_id', userId).select().single())
+  const row = unwrap(
+    await db.from('events').update(toColumns(patch)).eq('id', id).eq('user_id', userId).select().single(),
+  )
   res.json({ data: toEvent(row) })
 })
 
 eventsRouter.delete('/events/:id', async (req, res) => {
   const { db, userId } = getAuth(req)
-  const deleted = unwrap(await db.from('events').delete().eq('id', parseId(req.params.id)).eq('user_id', userId).select('id'))
+  const deleted = unwrap(
+    await db.from('events').delete().eq('id', parseId(req.params.id)).eq('user_id', userId).select('id'),
+  )
   if (deleted.length === 0) throw notFound('Event')
   res.status(204).end()
 })
@@ -80,7 +99,14 @@ eventsRouter.get('/events/:id/plan', async (req, res) => {
   const id = parseId(req.params.id)
   await loadOwnedEvent(db, userId, id)
   const row = unwrapMaybe(
-    await db.from('event_plans').select('version, plan, created_at').eq('event_id', id).eq('user_id', userId).order('version', { ascending: false }).limit(1).maybeSingle(),
+    await db
+      .from('event_plans')
+      .select('version, plan, created_at')
+      .eq('event_id', id)
+      .eq('user_id', userId)
+      .order('version', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   )
   res.json({ data: row ? { version: row.version, plan: row.plan, createdAt: row.created_at } : null })
 })
@@ -95,11 +121,27 @@ eventsRouter.put('/events/:id/plan/schedule', async (req, res) => {
   const { schedule } = scheduleUpdateSchema.parse(req.body)
   await loadOwnedEvent(db, userId, id)
   const latest = unwrapMaybe(
-    await db.from('event_plans').select('version, plan').eq('event_id', id).eq('user_id', userId).order('version', { ascending: false }).limit(1).maybeSingle(),
+    await db
+      .from('event_plans')
+      .select('version, plan')
+      .eq('event_id', id)
+      .eq('user_id', userId)
+      .order('version', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   )
   if (!latest) throw notFound('Plan')
-  const plan = eventPlanSchema.parse({ ...(latest.plan as object), schedule: [...schedule].sort((a, b) => a.time.localeCompare(b.time)) })
-  const row = unwrap(await db.from('event_plans').insert({ event_id: id, user_id: userId, version: latest.version + 1, plan }).select('version, plan, created_at').single())
+  const plan = eventPlanSchema.parse({
+    ...(latest.plan as object),
+    schedule: [...schedule].sort((a, b) => a.time.localeCompare(b.time)),
+  })
+  const row = unwrap(
+    await db
+      .from('event_plans')
+      .insert({ event_id: id, user_id: userId, version: latest.version + 1, plan })
+      .select('version, plan, created_at')
+      .single(),
+  )
   res.json({ data: { version: row.version, plan: row.plan, createdAt: row.created_at } })
 })
 
@@ -108,6 +150,14 @@ eventsRouter.patch('/events/:id/invitation', async (req, res) => {
   const id = parseId(req.params.id)
   const { text, tone } = invitationSchema.parse(req.body)
   await loadOwnedEvent(db, userId, id)
-  const row = unwrap(await db.from('events').update({ invitation_text: text, invitation_tone: tone }).eq('id', id).eq('user_id', userId).select().single())
+  const row = unwrap(
+    await db
+      .from('events')
+      .update({ invitation_text: text, invitation_tone: tone })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single(),
+  )
   res.json({ data: toEvent(row) })
 })

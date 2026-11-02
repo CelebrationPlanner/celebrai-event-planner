@@ -2,7 +2,7 @@ import { Info, LoaderCircle } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
 import { z } from 'zod'
-import { startDemo, syncTimeZone, useAuth } from '@/app/auth'
+import { startDemo, syncTimeZone, useAuth } from '@/app/session'
 import { Field } from '@/components/Field'
 import { Logo } from '@/components/Logo'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -11,20 +11,17 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { api, errorMessage } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
+import { safeNext } from './safeNext'
 
 const loginSchema = z.object({
   email: z.email('Enter a valid email address.'),
   password: z.string().min(8, 'Password must be at least 8 characters.'),
 })
-const signupSchema = loginSchema.extend({ name: z.string().trim().min(1, 'Enter your name.').max(80, 'Keep your name under 80 characters.') })
+const signupSchema = loginSchema.extend({
+  name: z.string().trim().min(1, 'Enter your name.').max(80, 'Keep your name under 80 characters.'),
+})
 
 type Errors = Partial<Record<'name' | 'email' | 'password' | 'form', string>>
-
-/**
- * Only same-app paths are allowed as a post-login destination (no open redirects). Browsers
- * treat a backslash like a slash and strip tabs/newlines, so those tricks are rejected too.
- */
-export const safeNext = (next: string | null) => (next && /^\/(?![\\/])[^\\\t\n\r]*$/.test(next) ? next : '/dashboard')
 
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const [errors, setErrors] = useState<Errors>({})
@@ -64,7 +61,12 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       const { data, error } = upgradingDemo
         ? await supabase.auth.updateUser({ email, password, data: { display_name: name } })
         : await supabase.auth.signUp({ email, password, options: { data: { display_name: name } } })
-      if (error) return setErrors({ form: error.message.includes('already') ? 'An account with this email already exists. Try logging in.' : 'Couldn’t create your account. Please try again.' })
+      if (error)
+        return setErrors({
+          form: error.message.includes('already')
+            ? 'An account with this email already exists. Try logging in.'
+            : 'Couldn’t create your account. Please try again.',
+        })
       if (!upgradingDemo && !('session' in data && data.session)) return setConfirmEmail(true)
       await Promise.all([syncTimeZone(), api.updateProfile({ displayName: name }).catch(() => undefined)])
       navigate(next, { replace: true })
@@ -89,9 +91,15 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
     <main className="flex min-h-dvh flex-col items-center justify-center px-4 py-12">
       <Logo />
       <Card className="mt-8 w-full max-w-sm p-6">
-        <h1 className="font-heading text-3xl">{isSignup ? (upgradingDemo ? 'Keep your plans' : 'Create your account') : 'Welcome back'}</h1>
+        <h1 className="font-heading text-3xl">
+          {isSignup ? (upgradingDemo ? 'Keep your plans' : 'Create your account') : 'Welcome back'}
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {upgradingDemo ? 'Turn your demo into a permanent account — your events come with you.' : isSignup ? 'Save events and pick up planning anywhere.' : 'Log in to continue planning.'}
+          {upgradingDemo
+            ? 'Turn your demo into a permanent account — your events come with you.'
+            : isSignup
+              ? 'Save events and pick up planning anywhere.'
+              : 'Log in to continue planning.'}
         </p>
 
         {confirmEmail ? (
@@ -111,7 +119,14 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
               {(p) => <Input {...p} name="email" type="email" autoComplete="email" />}
             </Field>
             <Field label="Password" error={errors.password} hint={isSignup ? 'At least 8 characters.' : undefined}>
-              {(p) => <Input {...p} name="password" type="password" autoComplete={isSignup ? 'new-password' : 'current-password'} />}
+              {(p) => (
+                <Input
+                  {...p}
+                  name="password"
+                  type="password"
+                  autoComplete={isSignup ? 'new-password' : 'current-password'}
+                />
+              )}
             </Field>
             {errors.form && (
               <p role="alert" className="text-sm text-destructive">
@@ -127,13 +142,21 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           {isSignup ? 'Already have an account? ' : 'New to CelebrAI? '}
-          <Link to={`${isSignup ? '/login' : '/signup'}?next=${encodeURIComponent(next)}`} className="font-medium text-primary underline-offset-2 hover:underline">
+          <Link
+            to={`${isSignup ? '/login' : '/signup'}?next=${encodeURIComponent(next)}`}
+            className="font-medium text-primary underline-offset-2 hover:underline"
+          >
             {isSignup ? 'Log in' : 'Create an account'}
           </Link>
         </p>
       </Card>
       {!upgradingDemo && (
-        <button type="button" onClick={tryDemo} disabled={pending} className="mt-4 text-sm text-muted-foreground underline-offset-2 hover:underline disabled:opacity-50">
+        <button
+          type="button"
+          onClick={tryDemo}
+          disabled={pending}
+          className="mt-4 text-sm text-muted-foreground underline-offset-2 hover:underline disabled:opacity-50"
+        >
           Or try the demo without an account
         </button>
       )}

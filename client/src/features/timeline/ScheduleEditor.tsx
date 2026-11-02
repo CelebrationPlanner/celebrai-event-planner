@@ -32,12 +32,14 @@ export function ScheduleEditor({ eventId, schedule }: { eventId: string; schedul
     setError(undefined)
     setEditing(true)
   }
-  const update = (i: number, patch: Partial<Item>) => setRows((r) => r.map((row, j) => (j === i ? { ...row, ...patch } : row)))
+  const update = (i: number, patch: Partial<Item>) =>
+    setRows((r) => r.map((row, j) => (j === i ? { ...row, ...patch } : row)))
 
   function submit(e: FormEvent) {
     e.preventDefault()
     const items = rows.map((r) => ({ time: r.time, activity: r.activity.trim() }))
-    if (items.some((r) => !/^([01]\d|2[0-3]):[0-5]\d$/.test(r.time) || !r.activity)) return setError('Every item needs a time and an activity.')
+    if (items.some((r) => !/^([01]\d|2[0-3]):[0-5]\d$/.test(r.time) || !r.activity))
+      return setError('Every item needs a time and an activity.')
     save.mutate(items)
   }
 
@@ -71,9 +73,26 @@ export function ScheduleEditor({ eventId, schedule }: { eventId: string; schedul
         <ul className="flex flex-col gap-2" aria-label="Agenda items">
           {rows.map((row, i) => (
             <li key={i} className="flex items-center gap-2">
-              <Input type="time" aria-label={`Time for item ${i + 1}`} value={row.time} onChange={(e) => update(i, { time: e.target.value })} className="w-32" />
-              <Input aria-label={`Activity for item ${i + 1}`} value={row.activity} maxLength={200} onChange={(e) => update(i, { activity: e.target.value })} />
-              <Button type="button" variant="ghost" size="icon-sm" aria-label={`Remove item ${i + 1}`} onClick={() => setRows((r) => r.filter((_, j) => j !== i))}>
+              <Input
+                type="time"
+                aria-label={`Time for item ${i + 1}`}
+                value={row.time}
+                onChange={(e) => update(i, { time: e.target.value })}
+                className="w-32"
+              />
+              <Input
+                aria-label={`Activity for item ${i + 1}`}
+                value={row.activity}
+                maxLength={200}
+                onChange={(e) => update(i, { activity: e.target.value })}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Remove item ${i + 1}`}
+                onClick={() => setRows((r) => r.filter((_, j) => j !== i))}
+              >
                 <Trash2 />
               </Button>
             </li>
@@ -85,14 +104,26 @@ export function ScheduleEditor({ eventId, schedule }: { eventId: string; schedul
           </p>
         )}
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" disabled={rows.length >= 20} onClick={() => setRows((r) => [...r, { time: '', activity: '' }])}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={rows.length >= 20}
+            onClick={() => setRows((r) => [...r, { time: '', activity: '' }])}
+          >
             <Plus aria-hidden="true" /> Add item
           </Button>
           <span className="flex-1" />
-          <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
-          <Button type="submit" size="sm" disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save schedule'}</Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
+            Cancel
+          </Button>
+          <Button type="submit" size="sm" disabled={save.isPending}>
+            {save.isPending ? 'Saving…' : 'Save schedule'}
+          </Button>
         </div>
-        <p className="text-xs text-muted-foreground">Items are sorted by time when saved. Regenerating the plan replaces this agenda.</p>
+        <p className="text-xs text-muted-foreground">
+          Items are sorted by time when saved. Regenerating the plan replaces this agenda.
+        </p>
       </form>
     </Card>
   )

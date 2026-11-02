@@ -1,6 +1,14 @@
 // What the model is allowed to return. It supplies words and extracted facts; it never
 // supplies money amounts or calendar dates for the plan — the engine does.
-import { BUDGET_CATEGORIES, CURRENCIES, OCCASIONS, PRIORITIES, TASK_KINDS, timeOfDaySchema, VENUE_PREFERENCES } from '@celebrai/shared'
+import {
+  BUDGET_CATEGORIES,
+  CURRENCIES,
+  OCCASIONS,
+  PRIORITIES,
+  TASK_KINDS,
+  timeOfDaySchema,
+  VENUE_PREFERENCES,
+} from '@celebrai/shared'
 import { z } from 'zod'
 
 /** Model text is trimmed to the limit rather than failing the whole response; it never carries numbers. */
@@ -11,7 +19,15 @@ const line = (max: number) =>
     .min(1)
     .transform((s) => s.slice(0, max))
     .describe(`At most ${max} characters.`)
-const tags = z.array(z.string().trim().min(1).transform((s) => s.slice(0, 40))).transform((t) => t.slice(0, 10))
+const tags = z
+  .array(
+    z
+      .string()
+      .trim()
+      .min(1)
+      .transform((s) => s.slice(0, 40)),
+  )
+  .transform((t) => t.slice(0, 10))
 
 /** Chat turn: a short acknowledgement plus facts extracted from what the user said. */
 export const aiChatSchema = z.object({
@@ -49,10 +65,22 @@ export const aiPlanSchema = z.object({
     )
     .min(3)
     .max(10),
-  schedule: z.array(z.object({ time: timeOfDaySchema.describe('24-hour HH:MM, e.g. 16:30.'), activity: line(200) })).min(3).max(16),
+  schedule: z
+    .array(z.object({ time: timeOfDaySchema.describe('24-hour HH:MM, e.g. 16:30.'), activity: line(200) }))
+    .min(3)
+    .max(16),
   risks: z.array(z.object({ issue: line(300), mitigation: line(400) })).max(8),
   assumptions: z.array(line(300)).max(8),
-  extraTasks: z.array(z.object({ title: line(200), priority: z.enum(PRIORITIES), kind: z.enum(TASK_KINDS), daysBeforeEvent: z.number().int().min(0).max(365).describe('Whole days before the event.') })).max(6),
+  extraTasks: z
+    .array(
+      z.object({
+        title: line(200),
+        priority: z.enum(PRIORITIES),
+        kind: z.enum(TASK_KINDS),
+        daysBeforeEvent: z.number().int().min(0).max(365).describe('Whole days before the event.'),
+      }),
+    )
+    .max(6),
 })
 export type AiPlan = z.infer<typeof aiPlanSchema>
 

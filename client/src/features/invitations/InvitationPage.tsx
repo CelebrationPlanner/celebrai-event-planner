@@ -66,7 +66,6 @@ export default function InvitationPage() {
     }
   }
 
-
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="flex flex-col gap-6">
@@ -77,10 +76,20 @@ export default function InvitationPage() {
               {INVITATION_TONES.map((t) => (
                 <label
                   key={t}
-                  className="flex cursor-pointer flex-col gap-0.5 rounded-xl border p-3 has-checked:border-primary has-checked:bg-secondary has-focus-visible:ring-3 has-focus-visible:ring-ring/50"
+                  className={
+                    'flex cursor-pointer flex-col gap-0.5 rounded-xl border p-3 has-checked:border-primary ' +
+                    'has-checked:bg-secondary has-focus-visible:ring-3 has-focus-visible:ring-ring/50'
+                  }
                 >
                   <span className="flex items-center gap-2 text-sm font-medium capitalize">
-                    <input type="radio" name="tone" value={t} checked={tone === t} onChange={() => setTone(t)} className="accent-primary" />
+                    <input
+                      type="radio"
+                      name="tone"
+                      value={t}
+                      checked={tone === t}
+                      onChange={() => setTone(t)}
+                      className="accent-primary"
+                    />
                     {t}
                   </span>
                   <span className="text-xs text-muted-foreground">{TONE_HINT[t]}</span>
@@ -89,13 +98,17 @@ export default function InvitationPage() {
             </div>
           </fieldset>
           <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setText(invitationTemplate(event, tone))}>
-            <FileText aria-hidden="true" /> Use {tone} template
-          </Button>
-          <Button variant="secondary" onClick={() => generate.mutate()} disabled={generate.isPending}>
-            {generate.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Sparkles aria-hidden="true" />}
-            {generate.isPending ? 'Writing…' : `Write with AI`}
-          </Button>
+            <Button variant="outline" onClick={() => setText(invitationTemplate(event, tone))}>
+              <FileText aria-hidden="true" /> Use {tone} template
+            </Button>
+            <Button variant="secondary" onClick={() => generate.mutate()} disabled={generate.isPending}>
+              {generate.isPending ? (
+                <LoaderCircle className="animate-spin" aria-hidden="true" />
+              ) : (
+                <Sparkles aria-hidden="true" />
+              )}
+              {generate.isPending ? 'Writing…' : `Write with AI`}
+            </Button>
           </div>
           {generate.error && (
             <Alert variant="destructive" role="alert">
@@ -107,7 +120,9 @@ export default function InvitationPage() {
 
         <Card className="gap-3 p-5">
           <div className="flex items-center justify-between">
-            <Label htmlFor={editorId} className="font-semibold">Invitation text</Label>
+            <Label htmlFor={editorId} className="font-semibold">
+              Invitation text
+            </Label>
             <span className="text-xs text-muted-foreground" aria-live="polite">
               {text.length}/{MAX_LENGTH}
             </span>
@@ -149,7 +164,9 @@ export default function InvitationPage() {
       </div>
 
       <section aria-labelledby="preview-heading">
-        <h2 id="preview-heading" className="mb-3 font-semibold">Preview</h2>
+        <h2 id="preview-heading" className="mb-3 font-semibold">
+          Preview
+        </h2>
         <div className="rounded-3xl bg-secondary p-4 sm:p-8">
           <article className="mx-auto max-w-md rounded-2xl border-t-4 border-gold bg-card p-6 shadow-sm sm:p-8">
             <Mail className="mx-auto mb-4 size-6 text-coral" aria-hidden="true" />

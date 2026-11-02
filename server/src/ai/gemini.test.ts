@@ -28,13 +28,20 @@ describe('Gemini provider', () => {
     expect(call).toMatchObject({
       model: 'gemini-test',
       contents: 'plan please',
-      config: { systemInstruction: 'rules', responseMimeType: 'application/json', responseJsonSchema: { type: 'object' }, maxOutputTokens: 512 },
+      config: {
+        systemInstruction: 'rules',
+        responseMimeType: 'application/json',
+        responseJsonSchema: { type: 'object' },
+        maxOutputTokens: 512,
+      },
     })
     expect(call.config.abortSignal).toBeInstanceOf(AbortSignal)
   })
 
   it('retries once on a transient provider error', async () => {
-    generateContent.mockRejectedValueOnce(new ApiError({ message: 'overloaded', status: 503 })).mockResolvedValueOnce({ text: '{"ok":1}' })
+    generateContent
+      .mockRejectedValueOnce(new ApiError({ message: 'overloaded', status: 503 }))
+      .mockResolvedValueOnce({ text: '{"ok":1}' })
     await expect(provider.generateJson(request)).resolves.toEqual({ ok: 1 })
     expect(generateContent).toHaveBeenCalledTimes(2)
   })

@@ -14,7 +14,15 @@ export function LoadingBlock({ rows = 3, label = 'Loading' }: { rows?: number; l
   )
 }
 
-export function ErrorState({ error, onRetry, title = 'Couldn’t load this' }: { error: unknown; onRetry?: () => void; title?: string }) {
+export function ErrorState({
+  error,
+  onRetry,
+  title = 'Couldn’t load this',
+}: {
+  error: unknown
+  onRetry?: () => void
+  title?: string
+}) {
   return (
     <Alert variant="destructive" role="alert">
       <TriangleAlert aria-hidden="true" />

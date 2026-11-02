@@ -3,7 +3,18 @@ import { AiError, type AIProvider } from './provider.ts'
 
 // Structured outputs accept a JSON Schema subset: every object closed, no numeric/length/item-count
 // limits. Those limits are still enforced by Zod on the response.
-const SUPPORTED = new Set(['type', 'properties', 'required', 'items', 'enum', 'const', 'anyOf', 'allOf', 'description', 'format'])
+const SUPPORTED = new Set([
+  'type',
+  'properties',
+  'required',
+  'items',
+  'enum',
+  'const',
+  'anyOf',
+  'allOf',
+  'description',
+  'format',
+])
 
 /** Standard JSON Schema → the dialect Claude structured outputs accept. */
 export function toClaudeSchema(node: unknown): unknown {
@@ -11,14 +22,18 @@ export function toClaudeSchema(node: unknown): unknown {
   if (node === null || typeof node !== 'object') return node
   const out: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(node)) {
-    if (key === 'properties') out[key] = Object.fromEntries(Object.entries(value as object).map(([k, v]) => [k, toClaudeSchema(v)]))
+    if (key === 'properties')
+      out[key] = Object.fromEntries(Object.entries(value as object).map(([k, v]) => [k, toClaudeSchema(v)]))
     else if (SUPPORTED.has(key)) out[key] = toClaudeSchema(value)
   }
   if (out.type === 'object') out.additionalProperties = false
   // Zod writes nullable primitives as `type: ["string", "null"]`; use the documented anyOf form.
   if (Array.isArray(out.type)) {
     const { type, description, ...rest } = out
-    return { ...(description ? { description } : {}), anyOf: (type as string[]).map((t) => (t === 'null' ? { type: 'null' } : { ...rest, type: t })) }
+    return {
+      ...(description ? { description } : {}),
+      anyOf: (type as string[]).map((t) => (t === 'null' ? { type: 'null' } : { ...rest, type: t })),
+    }
   }
   return out
 }
@@ -45,21 +60,29 @@ export function createClaudeProvider(options: { apiKey: string; model: string; t
             max_tokens: request.maxOutputTokens + THINKING_HEADROOM,
             system: request.system,
             messages: [{ role: 'user', content: request.prompt }],
-            output_config: { effort: 'medium', format: { type: 'json_schema', schema: toClaudeSchema(request.schema) as Record<string, unknown> } },
+            output_config: {
+              effort: 'medium',
+              format: { type: 'json_schema', schema: toClaudeSchema(request.schema) as Record<string, unknown> },
+            },
             betas: ['server-side-fallback-2026-07-01'],
             fallbacks: 'default',
           },
           { signal: AbortSignal.timeout(options.timeoutMs) },
         )
       } catch (err) {
-        if (err instanceof Anthropic.APIConnectionTimeoutError || err instanceof Anthropic.APIUserAbortError) throw new AiError('timeout', 'The AI provider timed out.')
+        if (err instanceof Anthropic.APIConnectionTimeoutError || err instanceof Anthropic.APIUserAbortError)
+          throw new AiError('timeout', 'The AI provider timed out.')
         // Log the status only; provider messages can echo request content.
-        console.error(`AI provider error${err instanceof Anthropic.APIError && err.status ? ` (HTTP ${err.status})` : ''}`)
+        console.error(
+          `AI provider error${err instanceof Anthropic.APIError && err.status ? ` (HTTP ${err.status})` : ''}`,
+        )
         throw new AiError('unavailable', 'The AI provider is unavailable.')
       }
 
-      if (response.stop_reason === 'refusal') throw new AiError('invalid_output', 'The AI provider declined the request.')
-      if (response.stop_reason === 'max_tokens') throw new AiError('invalid_output', 'The AI provider response was truncated.')
+      if (response.stop_reason === 'refusal')
+        throw new AiError('invalid_output', 'The AI provider declined the request.')
+      if (response.stop_reason === 'max_tokens')
+        throw new AiError('invalid_output', 'The AI provider response was truncated.')
       const text = response.content.find((block) => block.type === 'text')?.text
       if (!text) throw new AiError('invalid_output', 'The AI provider returned no text.')
       try {

@@ -28,8 +28,16 @@ export function GeneratePlan({ eventId, regenerate = false }: { eventId: string;
   return (
     <div className="flex flex-col gap-3">
       <Button onClick={() => generate.mutate()} disabled={generate.isPending} className="self-start">
-        {generate.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Sparkles aria-hidden="true" />}
-        {generate.isPending ? 'Planning… this can take up to a minute' : regenerate ? 'Regenerate plan' : 'Generate plan'}
+        {generate.isPending ? (
+          <LoaderCircle className="animate-spin" aria-hidden="true" />
+        ) : (
+          <Sparkles aria-hidden="true" />
+        )}
+        {generate.isPending
+          ? 'Planning… this can take up to a minute'
+          : regenerate
+            ? 'Regenerate plan'
+            : 'Generate plan'}
       </Button>
       {questions.length > 0 && (
         <Alert role="status">

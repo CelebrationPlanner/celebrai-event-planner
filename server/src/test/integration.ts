@@ -11,7 +11,15 @@ const noSession = { persistSession: false, autoRefreshToken: false, detectSessio
 export { SUPABASE_ANON_KEY, SUPABASE_URL, noSession }
 export const admin = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: noSession })
 export const testEnv = (overrides: Record<string, string> = {}) =>
-  loadEnv({ NODE_ENV: 'test', CLIENT_URL: 'http://localhost:5173', SUPABASE_URL, SUPABASE_ANON_KEY, API_RATE_LIMIT_MAX_REQUESTS: '10000', RATE_LIMIT_MAX_REQUESTS: '10000', ...overrides })
+  loadEnv({
+    NODE_ENV: 'test',
+    CLIENT_URL: 'http://localhost:5173',
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    API_RATE_LIMIT_MAX_REQUESTS: '10000',
+    RATE_LIMIT_MAX_REQUESTS: '10000',
+    ...overrides,
+  })
 
 export interface TestUser {
   id: string
@@ -27,18 +35,25 @@ export async function makeUser(label: string): Promise<TestUser> {
   const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: noSession })
   const { data, error } = await client.auth.signInWithPassword({ email, password })
   if (error || !data.session) throw error ?? new Error('no session')
-  const db = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: noSession, global: { headers: { Authorization: `Bearer ${data.session.access_token}` } } })
+  const db = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: noSession,
+    global: { headers: { Authorization: `Bearer ${data.session.access_token}` } },
+  })
   return { id: data.user.id, token: data.session.access_token, db }
 }
 
 /** Deleting the users cascades to every row they own. */
-export const deleteUsers = (users: Array<TestUser | undefined>) => Promise.all(users.filter((u) => u !== undefined).map((u) => admin.auth.admin.deleteUser(u.id)))
+export const deleteUsers = (users: Array<TestUser | undefined>) =>
+  Promise.all(users.filter((u) => u !== undefined).map((u) => admin.auth.admin.deleteUser(u.id)))
 
 export const client = (app: Express, user: TestUser) => ({
   get: (path: string) => request(app).get(`/api${path}`).set('Authorization', `Bearer ${user.token}`),
-  post: (path: string, body: object) => request(app).post(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
-  patch: (path: string, body: object) => request(app).patch(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
-  put: (path: string, body: object) => request(app).put(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
+  post: (path: string, body: object) =>
+    request(app).post(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
+  patch: (path: string, body: object) =>
+    request(app).patch(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
+  put: (path: string, body: object) =>
+    request(app).put(`/api${path}`).set('Authorization', `Bearer ${user.token}`).send(body),
   delete: (path: string) => request(app).delete(`/api${path}`).set('Authorization', `Bearer ${user.token}`),
 })
 
@@ -47,6 +62,9 @@ export async function makeAnonUser(): Promise<TestUser> {
   const anon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: noSession })
   const { data, error } = await anon.auth.signInAnonymously()
   if (error || !data.session || !data.user) throw error ?? new Error('no session')
-  const db = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: noSession, global: { headers: { Authorization: `Bearer ${data.session.access_token}` } } })
+  const db = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: noSession,
+    global: { headers: { Authorization: `Bearer ${data.session.access_token}` } },
+  })
   return { id: data.user.id, token: data.session.access_token, db }
 }

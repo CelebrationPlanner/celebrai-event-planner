@@ -5,7 +5,17 @@ import { createClient } from '@supabase/supabase-js'
 import request from 'supertest'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createApp } from './app.ts'
-import { admin, client, deleteUsers, makeUser, noSession, SUPABASE_ANON_KEY, SUPABASE_URL, testEnv, type TestUser } from './test/integration.ts'
+import {
+  admin,
+  client,
+  deleteUsers,
+  makeUser,
+  noSession,
+  SUPABASE_ANON_KEY,
+  SUPABASE_URL,
+  testEnv,
+  type TestUser,
+} from './test/integration.ts'
 
 const app = createApp(testEnv())
 const today = todayInTimeZone('Asia/Kolkata')
@@ -28,7 +38,13 @@ beforeAll(async () => {
     venuePreference: 'outdoor',
   })
   aliceEventId = created.body.data.id
-  aliceTaskId = (await api(alice).post(`/events/${aliceEventId}/tasks`, { title: 'Book venue', priority: 'high', dueDate: addDays(today, 2) })).body.data.id
+  aliceTaskId = (
+    await api(alice).post(`/events/${aliceEventId}/tasks`, {
+      title: 'Book venue',
+      priority: 'high',
+      dueDate: addDays(today, 2),
+    })
+  ).body.data.id
 })
 
 afterAll(() => deleteUsers([alice, bob]))
@@ -42,7 +58,9 @@ describe('authentication', () => {
 
   it('rejects a well-formed token with a forged signature (AUTH-04)', async () => {
     const [header, payload] = alice.token.split('.')
-    const res = await request(app).get('/api/events').set('Authorization', `Bearer ${header}.${payload}.forged-signature`)
+    const res = await request(app)
+      .get('/api/events')
+      .set('Authorization', `Bearer ${header}.${payload}.forged-signature`)
     expect(res.status).toBe(401)
   })
 })
@@ -51,7 +69,14 @@ describe('events (EVT-01, EVT-02, EVT-04)', () => {
   it('persists and returns the event with backend-owned fields', async () => {
     const res = await api(alice).get(`/events/${aliceEventId}`)
     expect(res.status).toBe(200)
-    expect(res.body.data).toMatchObject({ id: aliceEventId, status: 'planning', guestCount: 50, budgetMinor: 3_000_000, currency: 'INR', venuePreference: 'outdoor' })
+    expect(res.body.data).toMatchObject({
+      id: aliceEventId,
+      status: 'planning',
+      guestCount: 50,
+      budgetMinor: 3_000_000,
+      currency: 'INR',
+      venuePreference: 'outdoor',
+    })
   })
 
   it('lists only the caller’s events with pagination metadata', async () => {
@@ -62,11 +87,21 @@ describe('events (EVT-01, EVT-02, EVT-04)', () => {
   })
 
   it('rejects invalid guest counts, past dates and unknown fields', async () => {
-    const bad = await api(alice).post('/events', { occasion: 'birthday', eventName: 'X', budgetMinor: 1, guestCount: 0 })
+    const bad = await api(alice).post('/events', {
+      occasion: 'birthday',
+      eventName: 'X',
+      budgetMinor: 1,
+      guestCount: 0,
+    })
     expect(bad.status).toBe(400)
     expect(bad.body.error.details[0].path).toBe('guestCount')
 
-    const past = await api(alice).post('/events', { occasion: 'birthday', eventName: 'X', budgetMinor: 1, eventDate: addDays(today, -1) })
+    const past = await api(alice).post('/events', {
+      occasion: 'birthday',
+      eventName: 'X',
+      budgetMinor: 1,
+      eventDate: addDays(today, -1),
+    })
     expect(past.status).toBe(400)
     expect(past.body.error.details[0].path).toBe('eventDate')
 
@@ -85,9 +120,15 @@ describe('events (EVT-01, EVT-02, EVT-04)', () => {
   })
 
   it('saves the invitation text and tone', async () => {
-    const res = await api(alice).patch(`/events/${aliceEventId}/invitation`, { text: 'You are invited!', tone: 'modern' })
+    const res = await api(alice).patch(`/events/${aliceEventId}/invitation`, {
+      text: 'You are invited!',
+      tone: 'modern',
+    })
     expect(res.status).toBe(200)
-    expect((await api(alice).get(`/events/${aliceEventId}`)).body.data).toMatchObject({ invitationText: 'You are invited!', invitationTone: 'modern' })
+    expect((await api(alice).get(`/events/${aliceEventId}`)).body.data).toMatchObject({
+      invitationText: 'You are invited!',
+      invitationTone: 'modern',
+    })
   })
 
   it('returns null when no plan has been generated yet', async () => {
@@ -99,7 +140,12 @@ describe('events (EVT-01, EVT-02, EVT-04)', () => {
 
 describe('cross-user isolation (Scenario 10 / EVT-03)', () => {
   it('hides another user’s event and every child resource behind 404', async () => {
-    for (const path of [`/events/${aliceEventId}`, `/events/${aliceEventId}/tasks`, `/events/${aliceEventId}/budget`, `/events/${aliceEventId}/plan`]) {
+    for (const path of [
+      `/events/${aliceEventId}`,
+      `/events/${aliceEventId}/tasks`,
+      `/events/${aliceEventId}/budget`,
+      `/events/${aliceEventId}/plan`,
+    ]) {
       const res = await api(bob).get(path)
       expect(res.status, path).toBe(404)
       expect(JSON.stringify(res.body)).not.toContain('Scenario 1')
@@ -109,19 +155,29 @@ describe('cross-user isolation (Scenario 10 / EVT-03)', () => {
   it('blocks writes and deletes on another user’s data', async () => {
     expect((await api(bob).patch(`/events/${aliceEventId}`, { eventName: 'Hijacked' })).status).toBe(404)
     expect((await api(bob).patch(`/events/${aliceEventId}/invitation`, { text: 'x', tone: 'formal' })).status).toBe(404)
-    expect((await api(bob).patch(`/events/${aliceEventId}/budget`, { expenses: [{ category: 'food', estimatedMinor: 1, actualMinor: null }] })).status).toBe(404)
+    expect(
+      (
+        await api(bob).patch(`/events/${aliceEventId}/budget`, {
+          expenses: [{ category: 'food', estimatedMinor: 1, actualMinor: null }],
+        })
+      ).status,
+    ).toBe(404)
     expect((await api(bob).post(`/events/${aliceEventId}/tasks`, { title: 'Sneaky task' })).status).toBe(404)
     expect((await api(bob).patch(`/events/${aliceEventId}/tasks/${aliceTaskId}`, { completed: true })).status).toBe(404)
     expect((await api(bob).delete(`/events/${aliceEventId}/tasks/${aliceTaskId}`)).status).toBe(404)
     expect((await api(bob).delete(`/events/${aliceEventId}`)).status).toBe(404)
 
     // Bob can't reach Alice's task through his own event either.
-    const bobEvent = (await api(bob).post('/events', { occasion: 'family', eventName: 'Bob event', budgetMinor: 100 })).body.data.id
+    const bobEvent = (await api(bob).post('/events', { occasion: 'family', eventName: 'Bob event', budgetMinor: 100 }))
+      .body.data.id
     expect((await api(bob).patch(`/events/${bobEvent}/tasks/${aliceTaskId}`, { completed: true })).status).toBe(404)
 
     const after = await api(alice).get(`/events/${aliceEventId}`)
     expect(after.body.data.eventName).toBe('Scenario 1 birthday')
-    expect((await api(alice).get(`/events/${aliceEventId}/tasks`)).body.data[0]).toMatchObject({ title: 'Book venue', completed: false })
+    expect((await api(alice).get(`/events/${aliceEventId}/tasks`)).body.data[0]).toMatchObject({
+      title: 'Book venue',
+      completed: false,
+    })
   })
 
   it('treats malformed ids as not found', async () => {
@@ -140,7 +196,9 @@ describe('database-level protection (RLS + composite foreign keys)', () => {
   it('refuses to attach rows to another user’s event', async () => {
     const asBob = await bob.db.from('tasks').insert({ event_id: aliceEventId, user_id: bob.id, title: 'FK attack' })
     expect(asBob.error).not.toBeNull() // composite FK: (event_id, bob) has no matching event
-    const asAlice = await bob.db.from('tasks').insert({ event_id: aliceEventId, user_id: alice.id, title: 'RLS attack' })
+    const asAlice = await bob.db
+      .from('tasks')
+      .insert({ event_id: aliceEventId, user_id: alice.id, title: 'RLS attack' })
     expect(asAlice.error).not.toBeNull() // RLS: user_id must equal auth.uid()
   })
 
@@ -153,7 +211,9 @@ describe('database-level protection (RLS + composite foreign keys)', () => {
 
 describe('budget (BUD-01..04, Scenario 9)', () => {
   it('reports an exact overrun and never changes the budget (₹20,000 vs ₹24,000)', async () => {
-    const id = (await api(alice).post('/events', { occasion: 'birthday', eventName: 'Overrun', budgetMinor: 2_000_000 })).body.data.id
+    const id = (
+      await api(alice).post('/events', { occasion: 'birthday', eventName: 'Overrun', budgetMinor: 2_000_000 })
+    ).body.data.id
     const res = await api(alice).patch(`/events/${id}/budget`, {
       expenses: [
         { category: 'venue', estimatedMinor: 1_500_000, actualMinor: null },
@@ -161,11 +221,19 @@ describe('budget (BUD-01..04, Scenario 9)', () => {
       ],
     })
     expect(res.status).toBe(200)
-    expect(res.body.data.summary).toMatchObject({ budgetMinor: 2_000_000, estimatedMinor: 2_400_000, actualMinor: 100_000, overrunMinor: 400_000, remainingMinor: 0 })
+    expect(res.body.data.summary).toMatchObject({
+      budgetMinor: 2_000_000,
+      estimatedMinor: 2_400_000,
+      actualMinor: 100_000,
+      overrunMinor: 400_000,
+      remainingMinor: 0,
+    })
     expect((await api(alice).get(`/events/${id}`)).body.data.budgetMinor).toBe(2_000_000)
 
     // Upsert by category: editing food replaces the row instead of duplicating it.
-    const edited = await api(alice).patch(`/events/${id}/budget`, { expenses: [{ category: 'food', estimatedMinor: 500_000, actualMinor: 100_000 }] })
+    const edited = await api(alice).patch(`/events/${id}/budget`, {
+      expenses: [{ category: 'food', estimatedMinor: 500_000, actualMinor: 100_000 }],
+    })
     expect(edited.body.data.expenses).toHaveLength(2)
     expect(edited.body.data.summary).toMatchObject({ estimatedMinor: 2_000_000, overrunMinor: 0, remainingMinor: 0 })
   })
@@ -176,7 +244,10 @@ describe('budget (BUD-01..04, Scenario 9)', () => {
       [{ category: 'food', estimatedMinor: -1, actualMinor: null }],
       [{ category: 'food', estimatedMinor: 10.5, actualMinor: null }],
       [{ category: 'food', estimatedMinor: Number.MAX_SAFE_INTEGER + 2, actualMinor: null }],
-      [{ category: 'food', estimatedMinor: 1, actualMinor: null }, { category: 'food', estimatedMinor: 2, actualMinor: null }],
+      [
+        { category: 'food', estimatedMinor: 1, actualMinor: null },
+        { category: 'food', estimatedMinor: 2, actualMinor: null },
+      ],
     ]) {
       expect((await api(alice).patch(path, { expenses })).status).toBe(400)
     }
@@ -185,13 +256,17 @@ describe('budget (BUD-01..04, Scenario 9)', () => {
 
 describe('tasks (TASK-01)', () => {
   it('persists completion', async () => {
-    expect((await api(alice).patch(`/events/${aliceEventId}/tasks/${aliceTaskId}`, { completed: true })).status).toBe(200)
+    expect((await api(alice).patch(`/events/${aliceEventId}/tasks/${aliceTaskId}`, { completed: true })).status).toBe(
+      200,
+    )
     expect((await api(alice).get(`/events/${aliceEventId}/tasks`)).body.data[0].completed).toBe(true)
   })
 
   it('rejects past deadlines and deadlines after the event', async () => {
     const path = `/events/${aliceEventId}/tasks`
-    expect((await api(alice).post(path, { title: 'Too late', dueDate: addDays(today, 30) })).body.error.message).toBe('The due date must be on or before the event date.')
+    expect((await api(alice).post(path, { title: 'Too late', dueDate: addDays(today, 30) })).body.error.message).toBe(
+      'The due date must be on or before the event date.',
+    )
     expect((await api(alice).post(path, { title: 'In the past', dueDate: addDays(today, -1) })).status).toBe(400)
   })
 
@@ -202,7 +277,8 @@ describe('tasks (TASK-01)', () => {
   })
 
   it('deleting an event cascades to its tasks', async () => {
-    const id = (await api(alice).post('/events', { occasion: 'festival', eventName: 'Cascade', budgetMinor: 100 })).body.data.id
+    const id = (await api(alice).post('/events', { occasion: 'festival', eventName: 'Cascade', budgetMinor: 100 })).body
+      .data.id
     await api(alice).post(`/events/${id}/tasks`, { title: 'Child task' })
     expect((await api(alice).delete(`/events/${id}`)).status).toBe(204)
     const { count } = await admin.from('tasks').select('id', { count: 'exact', head: true }).eq('event_id', id)

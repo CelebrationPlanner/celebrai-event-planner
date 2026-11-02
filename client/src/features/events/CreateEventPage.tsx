@@ -14,11 +14,27 @@ import { formatDate, todayISO } from '@/lib/dates'
 import { formatMoney, parseMoney } from '@/lib/money'
 import { useRefreshEvent } from '@/lib/queries'
 import { CURRENCIES, OCCASIONS, type CelebrationEvent, type CurrencyCode, type Occasion } from '@/types'
-import { AGE_GROUPS, DIETARY_OPTIONS, emptyEventForm, validateStep, type EventFormValues, type FormErrors } from './eventForm'
+import {
+  AGE_GROUPS,
+  DIETARY_OPTIONS,
+  emptyEventForm,
+  validateStep,
+  type EventFormValues,
+  type FormErrors,
+} from './eventForm'
 
 const STEPS = ['The basics', 'Guests & budget', 'Preferences', 'Review']
 // Which step shows each field, so a server-side validation error can take the user back to it.
-const FIELD_STEP: Record<string, number> = { occasion: 0, eventName: 0, eventDate: 0, location: 0, guestCount: 1, budget: 1, currency: 1, venuePreference: 1 }
+const FIELD_STEP: Record<string, number> = {
+  occasion: 0,
+  eventName: 0,
+  eventDate: 0,
+  location: 0,
+  guestCount: 1,
+  budget: 1,
+  currency: 1,
+  venuePreference: 1,
+}
 
 export default function CreateEventPage() {
   const [params] = useSearchParams()
@@ -32,9 +48,15 @@ export default function CreateEventPage() {
   const [values, setValues] = useState<EventFormValues>(() => emptyEventForm(initialOccasion))
   const [errors, setErrors] = useState<FormErrors>({})
 
-  const set = <K extends keyof EventFormValues>(key: K, value: EventFormValues[K]) => setValues((v) => ({ ...v, [key]: value }))
+  const set = <K extends keyof EventFormValues>(key: K, value: EventFormValues[K]) =>
+    setValues((v) => ({ ...v, [key]: value }))
   const toggleDiet = (option: string) =>
-    set('dietaryRequirements', values.dietaryRequirements.includes(option) ? values.dietaryRequirements.filter((d) => d !== option) : [...values.dietaryRequirements, option])
+    set(
+      'dietaryRequirements',
+      values.dietaryRequirements.includes(option)
+        ? values.dietaryRequirements.filter((d) => d !== option)
+        : [...values.dietaryRequirements, option],
+    )
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -46,18 +68,21 @@ export default function CreateEventPage() {
     }
     create.mutate(
       {
-      occasion: values.occasion as Occasion,
-      eventName: values.eventName.trim(),
-      eventDate: values.eventDate || null,
-      location: values.location.trim(),
-      guestCount: Number(values.guestCount),
-      budgetMinor: parseMoney(values.budget)!,
-      currency: values.currency as CurrencyCode,
-      venuePreference: values.venuePreference as CelebrationEvent['venuePreference'],
-      themePreferences: values.themePreferences.split(',').map((t) => t.trim()).filter(Boolean),
-      ageGroup: values.ageGroup,
-      dietaryRequirements: values.dietaryRequirements,
-      additionalInstructions: values.additionalInstructions.trim(),
+        occasion: values.occasion as Occasion,
+        eventName: values.eventName.trim(),
+        eventDate: values.eventDate || null,
+        location: values.location.trim(),
+        guestCount: Number(values.guestCount),
+        budgetMinor: parseMoney(values.budget)!,
+        currency: values.currency as CurrencyCode,
+        venuePreference: values.venuePreference as CelebrationEvent['venuePreference'],
+        themePreferences: values.themePreferences
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+        ageGroup: values.ageGroup,
+        dietaryRequirements: values.dietaryRequirements,
+        additionalInstructions: values.additionalInstructions.trim(),
       },
       {
         onSuccess: (event) => {
@@ -67,8 +92,12 @@ export default function CreateEventPage() {
         },
         onError: (err) => {
           const server = fieldErrors(err)
-          const mapped: FormErrors = Object.fromEntries(Object.entries(server).map(([k, v]) => [k === 'budgetMinor' ? 'budget' : k, v]))
-          const first = Object.keys(mapped).map((k) => FIELD_STEP[k]).filter((n) => n !== undefined)
+          const mapped: FormErrors = Object.fromEntries(
+            Object.entries(server).map(([k, v]) => [k === 'budgetMinor' ? 'budget' : k, v]),
+          )
+          const first = Object.keys(mapped)
+            .map((k) => FIELD_STEP[k])
+            .filter((n) => n !== undefined)
           if (first.length) {
             setErrors(mapped)
             setStep(Math.min(...first))
@@ -85,7 +114,12 @@ export default function CreateEventPage() {
     ['Date', values.eventDate ? formatDate(values.eventDate) : 'Not decided — the assistant will ask'],
     ['Location', values.location || 'Not specified'],
     ['Guests', values.guestCount],
-    ['Budget', parseMoney(values.budget) !== null ? formatMoney(parseMoney(values.budget)!, values.currency as CurrencyCode) : '—'],
+    [
+      'Budget',
+      parseMoney(values.budget) !== null
+        ? formatMoney(parseMoney(values.budget)!, values.currency as CurrencyCode)
+        : '—',
+    ],
     ['Venue preference', values.venuePreference],
     ['Theme preferences', values.themePreferences || 'None'],
     ['Age group', values.ageGroup || 'Not specified'],
@@ -117,23 +151,52 @@ export default function CreateEventPage() {
             <>
               <Field label="Occasion" error={errors.occasion}>
                 {(p) => (
-                  <select {...p} className={selectClass} value={values.occasion} onChange={(e) => set('occasion', e.target.value)}>
+                  <select
+                    {...p}
+                    className={selectClass}
+                    value={values.occasion}
+                    onChange={(e) => set('occasion', e.target.value)}
+                  >
                     <option value="">Choose an occasion…</option>
                     {OCCASIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
                     ))}
                   </select>
                 )}
               </Field>
               <Field label="Event name" error={errors.eventName}>
-                {(p) => <Input {...p} value={values.eventName} onChange={(e) => set('eventName', e.target.value)} placeholder="e.g. Anaya’s 5th Birthday" />}
+                {(p) => (
+                  <Input
+                    {...p}
+                    value={values.eventName}
+                    onChange={(e) => set('eventName', e.target.value)}
+                    placeholder="e.g. Anaya’s 5th Birthday"
+                  />
+                )}
               </Field>
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field label="Date" error={errors.eventDate} hint="Not sure yet? Leave it blank.">
-                  {(p) => <Input {...p} type="date" min={today} value={values.eventDate} onChange={(e) => set('eventDate', e.target.value)} />}
+                  {(p) => (
+                    <Input
+                      {...p}
+                      type="date"
+                      min={today}
+                      value={values.eventDate}
+                      onChange={(e) => set('eventDate', e.target.value)}
+                    />
+                  )}
                 </Field>
                 <Field label="Location" error={errors.location}>
-                  {(p) => <Input {...p} value={values.location} onChange={(e) => set('location', e.target.value)} placeholder="City or area" />}
+                  {(p) => (
+                    <Input
+                      {...p}
+                      value={values.location}
+                      onChange={(e) => set('location', e.target.value)}
+                      placeholder="City or area"
+                    />
+                  )}
                 </Field>
               </div>
             </>
@@ -143,15 +206,35 @@ export default function CreateEventPage() {
             <>
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field label="Guest count" error={errors.guestCount}>
-                  {(p) => <Input {...p} inputMode="numeric" value={values.guestCount} onChange={(e) => set('guestCount', e.target.value)} />}
+                  {(p) => (
+                    <Input
+                      {...p}
+                      inputMode="numeric"
+                      value={values.guestCount}
+                      onChange={(e) => set('guestCount', e.target.value)}
+                    />
+                  )}
                 </Field>
                 <div className="grid grid-cols-[1fr_6rem] gap-2">
                   <Field label="Total budget" error={errors.budget}>
-                    {(p) => <Input {...p} inputMode="decimal" value={values.budget} onChange={(e) => set('budget', e.target.value)} placeholder="25000" />}
+                    {(p) => (
+                      <Input
+                        {...p}
+                        inputMode="decimal"
+                        value={values.budget}
+                        onChange={(e) => set('budget', e.target.value)}
+                        placeholder="25000"
+                      />
+                    )}
                   </Field>
                   <Field label="Currency">
                     {(p) => (
-                      <select {...p} className={selectClass} value={values.currency} onChange={(e) => set('currency', e.target.value)}>
+                      <select
+                        {...p}
+                        className={selectClass}
+                        value={values.currency}
+                        onChange={(e) => set('currency', e.target.value)}
+                      >
                         {CURRENCIES.map((c) => (
                           <option key={c}>{c}</option>
                         ))}
@@ -164,8 +247,21 @@ export default function CreateEventPage() {
                 <legend className="mb-1.5 text-sm font-medium">Venue preference</legend>
                 <div className="grid gap-2 sm:grid-cols-3">
                   {(['indoor', 'outdoor', 'flexible'] as const).map((v) => (
-                    <label key={v} className="flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm capitalize has-checked:border-primary has-checked:bg-secondary has-focus-visible:ring-3 has-focus-visible:ring-ring/50">
-                      <input type="radio" name="venuePreference" value={v} checked={values.venuePreference === v} onChange={() => set('venuePreference', v)} className="accent-primary" />
+                    <label
+                      key={v}
+                      className={
+                        'flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm capitalize has-checked:border-primary ' +
+                        'has-checked:bg-secondary has-focus-visible:ring-3 has-focus-visible:ring-ring/50'
+                      }
+                    >
+                      <input
+                        type="radio"
+                        name="venuePreference"
+                        value={v}
+                        checked={values.venuePreference === v}
+                        onChange={() => set('venuePreference', v)}
+                        className="accent-primary"
+                      />
                       {v}
                     </label>
                   ))}
@@ -176,12 +272,27 @@ export default function CreateEventPage() {
 
           {step === 2 && (
             <>
-              <Field label="Theme preferences" error={errors.themePreferences} hint="Separate ideas with commas, e.g. Princess, pastel colours.">
-                {(p) => <Input {...p} value={values.themePreferences} onChange={(e) => set('themePreferences', e.target.value)} />}
+              <Field
+                label="Theme preferences"
+                error={errors.themePreferences}
+                hint="Separate ideas with commas, e.g. Princess, pastel colours."
+              >
+                {(p) => (
+                  <Input
+                    {...p}
+                    value={values.themePreferences}
+                    onChange={(e) => set('themePreferences', e.target.value)}
+                  />
+                )}
               </Field>
               <Field label="Age group">
                 {(p) => (
-                  <select {...p} className={selectClass} value={values.ageGroup} onChange={(e) => set('ageGroup', e.target.value)}>
+                  <select
+                    {...p}
+                    className={selectClass}
+                    value={values.ageGroup}
+                    onChange={(e) => set('ageGroup', e.target.value)}
+                  >
                     <option value="">Not specified</option>
                     {AGE_GROUPS.map((a) => (
                       <option key={a}>{a}</option>
@@ -193,15 +304,37 @@ export default function CreateEventPage() {
                 <legend className="mb-2 text-sm font-medium">Dietary requirements</legend>
                 <div className="flex flex-wrap gap-2">
                   {DIETARY_OPTIONS.map((d) => (
-                    <label key={d} className="flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm has-checked:border-primary has-checked:bg-secondary has-focus-visible:ring-3 has-focus-visible:ring-ring/50">
-                      <input type="checkbox" checked={values.dietaryRequirements.includes(d)} onChange={() => toggleDiet(d)} className="accent-primary" />
+                    <label
+                      key={d}
+                      className={
+                        'flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm has-checked:border-primary ' +
+                        'has-checked:bg-secondary has-focus-visible:ring-3 has-focus-visible:ring-ring/50'
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        checked={values.dietaryRequirements.includes(d)}
+                        onChange={() => toggleDiet(d)}
+                        className="accent-primary"
+                      />
                       {d}
                     </label>
                   ))}
                 </div>
               </fieldset>
-              <Field label="Anything else?" error={errors.additionalInstructions} hint="Optional. Special requests, accessibility needs, must-haves.">
-                {(p) => <Textarea {...p} rows={3} value={values.additionalInstructions} onChange={(e) => set('additionalInstructions', e.target.value)} />}
+              <Field
+                label="Anything else?"
+                error={errors.additionalInstructions}
+                hint="Optional. Special requests, accessibility needs, must-haves."
+              >
+                {(p) => (
+                  <Textarea
+                    {...p}
+                    rows={3}
+                    value={values.additionalInstructions}
+                    onChange={(e) => set('additionalInstructions', e.target.value)}
+                  />
+                )}
               </Field>
             </>
           )}
@@ -224,7 +357,12 @@ export default function CreateEventPage() {
             <Button type="submit" disabled={create.isPending}>
               {step === STEPS.length - 1 ? (
                 <>
-                  {create.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Check aria-hidden="true" />} Create event
+                  {create.isPending ? (
+                    <LoaderCircle className="animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Check aria-hidden="true" />
+                  )}{' '}
+                  Create event
                 </>
               ) : (
                 <>

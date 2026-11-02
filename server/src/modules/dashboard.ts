@@ -16,9 +16,21 @@ dashboardRouter.get('/dashboard', async (req, res) => {
   const { db, userId } = getAuth(req)
   const [today, events, tasks, plans] = await Promise.all([
     userToday(db, userId),
-    db.from('events').select('*').eq('user_id', userId).order('event_date', { ascending: true, nullsFirst: false }).limit(50).then(unwrap),
+    db
+      .from('events')
+      .select('*')
+      .eq('user_id', userId)
+      .order('event_date', { ascending: true, nullsFirst: false })
+      .limit(50)
+      .then(unwrap),
     db.from('tasks').select('event_id, title, completed, updated_at').eq('user_id', userId).then(unwrap),
-    db.from('event_plans').select('event_id, version, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(10).then(unwrap),
+    db
+      .from('event_plans')
+      .select('event_id, version, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10)
+      .then(unwrap),
   ])
 
   const names = new Map(events.map((e) => [e.id, e.event_name]))
@@ -30,12 +42,19 @@ dashboardRouter.get('/dashboard', async (req, res) => {
     progress.set(t.event_id, p)
   }
   const budgetByCurrency: Partial<Record<CurrencyCode, number>> = {}
-  for (const e of events) budgetByCurrency[e.currency as CurrencyCode] = (budgetByCurrency[e.currency as CurrencyCode] ?? 0) + e.budget_minor
+  for (const e of events)
+    budgetByCurrency[e.currency as CurrencyCode] = (budgetByCurrency[e.currency as CurrencyCode] ?? 0) + e.budget_minor
 
   const activity = [
     ...events.map((e) => ({ eventId: e.id, message: `Created ${e.event_name}`, at: e.created_at })),
-    ...tasks.filter((t) => t.completed).map((t) => ({ eventId: t.event_id, message: `Completed “${t.title}”`, at: t.updated_at })),
-    ...plans.map((p) => ({ eventId: p.event_id, message: `Plan v${p.version} generated for ${names.get(p.event_id) ?? 'an event'}`, at: p.created_at })),
+    ...tasks
+      .filter((t) => t.completed)
+      .map((t) => ({ eventId: t.event_id, message: `Completed “${t.title}”`, at: t.updated_at })),
+    ...plans.map((p) => ({
+      eventId: p.event_id,
+      message: `Plan v${p.version} generated for ${names.get(p.event_id) ?? 'an event'}`,
+      at: p.created_at,
+    })),
   ]
     .sort((a, b) => b.at.localeCompare(a.at))
     .slice(0, 8)

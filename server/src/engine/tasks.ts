@@ -21,13 +21,37 @@ const TEMPLATES = (e: CelebrationEvent): Template[] => [
   { title: 'Finalise the guest list', kind: 'preparation', priority: 'high', lead: 28 },
   { title: 'Shortlist and book the venue', kind: 'vendor', priority: 'high', lead: 30 },
   { title: 'Book the caterer and fix the menu', kind: 'vendor', priority: 'high', lead: 21 },
-  { title: `Confirm dietary options with the caterer: ${e.dietaryRequirements.join(', ')}`, kind: 'vendor', priority: 'high', lead: 14, when: (f) => f.dietary.length > 0 },
+  {
+    title: `Confirm dietary options with the caterer: ${e.dietaryRequirements.join(', ')}`,
+    kind: 'vendor',
+    priority: 'high',
+    lead: 14,
+    when: (f) => f.dietary.length > 0,
+  },
   { title: 'Book the decorator', kind: 'vendor', priority: 'medium', lead: 14 },
   { title: 'Book a photographer', kind: 'vendor', priority: 'medium', lead: 14, when: (f) => !f.lowBudget },
   { title: 'Ask a friend to take photos', kind: 'preparation', priority: 'low', lead: 7, when: (f) => f.lowBudget },
-  { title: 'Book an age-appropriate entertainer', kind: 'vendor', priority: 'medium', lead: 14, when: (f) => f.children },
-  { title: 'Book entertainment', kind: 'vendor', priority: 'medium', lead: 14, when: (f) => !f.children && !f.lowBudget },
-  { title: 'Arrange a weather backup (tent or indoor space)', kind: 'vendor', priority: 'high', lead: 10, when: (f) => f.outdoor },
+  {
+    title: 'Book an age-appropriate entertainer',
+    kind: 'vendor',
+    priority: 'medium',
+    lead: 14,
+    when: (f) => f.children,
+  },
+  {
+    title: 'Book entertainment',
+    kind: 'vendor',
+    priority: 'medium',
+    lead: 14,
+    when: (f) => !f.children && !f.lowBudget,
+  },
+  {
+    title: 'Arrange a weather backup (tent or indoor space)',
+    kind: 'vendor',
+    priority: 'high',
+    lead: 10,
+    when: (f) => f.outdoor,
+  },
   { title: 'Send invitations', kind: 'invitation', priority: 'high', lead: 21 },
   { title: 'Collect RSVPs and confirm the headcount', kind: 'invitation', priority: 'medium', lead: 7 },
   { title: 'Buy supplies, favours and return gifts', kind: 'shopping', priority: 'medium', lead: 5 },
@@ -46,7 +70,8 @@ export function planTasks(event: CelebrationEvent, analysis: Analysis, today: st
     .filter((t) => !t.when || t.when(flags))
     .map((t) => {
       // No date, or a date already passed: leave undated rather than invent a deadline.
-      if (!event.eventDate || daysUntil === null || daysUntil < 0) return { title: t.title, kind: t.kind, priority: t.priority, dueDate: null }
+      if (!event.eventDate || daysUntil === null || daysUntil < 0)
+        return { title: t.title, kind: t.kind, priority: t.priority, dueDate: null }
       const lead = flags.wedding ? Math.min(t.lead * 3, 180) : t.lead
       const compressed = lead > daysUntil
       return {

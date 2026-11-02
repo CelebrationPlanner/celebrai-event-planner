@@ -20,7 +20,11 @@ function toMinor(amount: number | null): number | null {
  * by the shared schema; anything invalid is dropped, never saved, so a confused or manipulated
  * model can't write bad data. Returns notes for problems the user should hear about.
  */
-export function applyExtraction(current: CelebrationEvent | null, x: AiChat['extracted'], today: string): { patch: EventUpdate; notes: string[] } {
+export function applyExtraction(
+  current: CelebrationEvent | null,
+  x: AiChat['extracted'],
+  today: string,
+): { patch: EventUpdate; notes: string[] } {
   const notes: string[] = []
   const candidate: Record<string, unknown> = {
     occasion: x.occasion ?? undefined,
@@ -37,8 +41,10 @@ export function applyExtraction(current: CelebrationEvent | null, x: AiChat['ext
     if (x.eventDate >= today) candidate.eventDate = x.eventDate
     else notes.push('That date has already passed. What date is the event?')
   }
-  if (x.themePreferences.length) candidate.themePreferences = mergeTags(current?.themePreferences ?? [], x.themePreferences)
-  if (x.dietaryRequirements.length) candidate.dietaryRequirements = mergeTags(current?.dietaryRequirements ?? [], x.dietaryRequirements)
+  if (x.themePreferences.length)
+    candidate.themePreferences = mergeTags(current?.themePreferences ?? [], x.themePreferences)
+  if (x.dietaryRequirements.length)
+    candidate.dietaryRequirements = mergeTags(current?.dietaryRequirements ?? [], x.dietaryRequirements)
 
   const patch: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(candidate)) {

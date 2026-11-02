@@ -7,7 +7,10 @@ export interface BudgetLine {
 }
 
 /** Machine-readable so each client can word (and translate) warnings itself. */
-export type BudgetWarning = { kind: 'overrun'; amountMinor: Minor } | { kind: 'over_estimate'; category: BudgetCategory } | { kind: 'no_contingency' }
+export type BudgetWarning =
+  | { kind: 'overrun'; amountMinor: Minor }
+  | { kind: 'over_estimate'; category: BudgetCategory }
+  | { kind: 'no_contingency' }
 
 export interface BudgetSummary {
   budgetMinor: Minor
@@ -29,10 +32,18 @@ export function summarizeBudget(budgetMinor: Minor, lines: readonly BudgetLine[]
   const warnings: BudgetWarning[] = []
   if (diff < 0) warnings.push({ kind: 'overrun', amountMinor: -diff })
   for (const l of lines) {
-    if (l.actualMinor !== null && l.actualMinor > l.estimatedMinor) warnings.push({ kind: 'over_estimate', category: l.category })
+    if (l.actualMinor !== null && l.actualMinor > l.estimatedMinor)
+      warnings.push({ kind: 'over_estimate', category: l.category })
   }
   if (lines.length > 0 && !lines.some((l) => l.category === 'contingency' && l.estimatedMinor > 0)) {
     warnings.push({ kind: 'no_contingency' })
   }
-  return { budgetMinor, estimatedMinor, actualMinor, remainingMinor: Math.max(diff, 0), overrunMinor: Math.max(-diff, 0), warnings }
+  return {
+    budgetMinor,
+    estimatedMinor,
+    actualMinor,
+    remainingMinor: Math.max(diff, 0),
+    overrunMinor: Math.max(-diff, 0),
+    warnings,
+  }
 }

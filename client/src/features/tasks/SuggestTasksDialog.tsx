@@ -5,14 +5,29 @@ import { ErrorState, LoadingBlock } from '@/components/QueryStates'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { api, errorMessage } from '@/lib/api'
 import { formatDate } from '@/lib/dates'
 import { useRefreshEvent, useSuggestions } from '@/lib/queries'
 import type { Task } from '@/types'
 
 /** Automatic task generation without AI: the engine proposes, the user picks, one bulk insert saves. */
-export function SuggestTasksDialog({ eventId, existing, onClose }: { eventId: string; existing: Task[]; onClose: () => void }) {
+export function SuggestTasksDialog({
+  eventId,
+  existing,
+  onClose,
+}: {
+  eventId: string
+  existing: Task[]
+  onClose: () => void
+}) {
   const suggestions = useSuggestions(eventId, true)
   const refresh = useRefreshEvent()
   const have = new Set(existing.map((t) => t.title.toLowerCase()))
@@ -36,7 +51,9 @@ export function SuggestTasksDialog({ eventId, existing, onClose }: { eventId: st
       <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Suggested tasks</DialogTitle>
-          <DialogDescription>Based on your event’s date, guests, venue and needs. Deadlines are never in the past or after the event.</DialogDescription>
+          <DialogDescription>
+            Based on your event’s date, guests, venue and needs. Deadlines are never in the past or after the event.
+          </DialogDescription>
         </DialogHeader>
 
         {suggestions.isPending ? (
@@ -49,19 +66,29 @@ export function SuggestTasksDialog({ eventId, existing, onClose }: { eventId: st
           <ul className="flex flex-col gap-2" aria-label="Suggested tasks">
             {fresh.map((t) => (
               <li key={t.title} className="flex items-center gap-3 rounded-lg border p-3">
-                <Checkbox id={`suggest-${t.title}`} checked={!skipped.has(t.title)} onCheckedChange={() => toggle(t.title)} />
+                <Checkbox
+                  id={`suggest-${t.title}`}
+                  checked={!skipped.has(t.title)}
+                  onCheckedChange={() => toggle(t.title)}
+                />
                 <label htmlFor={`suggest-${t.title}`} className="flex-1 cursor-pointer text-sm">
                   {t.title}
-                  <span className="block text-xs text-muted-foreground">{t.dueDate ? `Due ${formatDate(t.dueDate, { day: 'numeric', month: 'short' })}` : 'No date yet'}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {t.dueDate ? `Due ${formatDate(t.dueDate, { day: 'numeric', month: 'short' })}` : 'No date yet'}
+                  </span>
                 </label>
-                <Badge variant="outline" className="capitalize">{t.priority}</Badge>
+                <Badge variant="outline" className="capitalize">
+                  {t.priority}
+                </Badge>
               </li>
             ))}
           </ul>
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button onClick={() => add.mutate()} disabled={chosen.length === 0 || add.isPending}>
             {add.isPending ? 'Adding…' : `Add ${chosen.length} task${chosen.length === 1 ? '' : 's'}`}
           </Button>

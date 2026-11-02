@@ -31,11 +31,17 @@ function makeEvent(overrides: Partial<CelebrationEvent> = {}): CelebrationEvent 
 }
 
 const total = (lines: { amountMinor: number }[]) => lines.reduce((s, l) => s + l.amountMinor, 0)
-const amount = (lines: { category: string; amountMinor: number }[], c: string) => lines.find((l) => l.category === c)!.amountMinor
+const amount = (lines: { category: string; amountMinor: number }[], c: string) =>
+  lines.find((l) => l.category === c)!.amountMinor
 const rules = (e: CelebrationEvent) => analyzeEvent(e, TODAY).decisions.map((d) => d.rule)
 
 describe('Scenario 1 — birthday, 50 guests, ₹30,000, outdoor, 10 days away', () => {
-  const event = makeEvent({ guestCount: 50, budgetMinor: 3_000_000, venuePreference: 'outdoor', eventDate: addDays(TODAY, 10) })
+  const event = makeEvent({
+    guestCount: 50,
+    budgetMinor: 3_000_000,
+    venuePreference: 'outdoor',
+    eventDate: addDays(TODAY, 10),
+  })
   const analysis = analyzeEvent(event, TODAY)
 
   it('allocates exactly the budget, with a larger contingency for the outdoor setting', () => {
@@ -55,7 +61,12 @@ describe('Scenario 1 — birthday, 50 guests, ₹30,000, outdoor, 10 days away',
 })
 
 describe('Scenario 2 — wedding, 200 guests, ₹5,00,000, 90 days away', () => {
-  const event = makeEvent({ occasion: 'wedding', guestCount: 200, budgetMinor: 50_000_000, eventDate: addDays(TODAY, 90) })
+  const event = makeEvent({
+    occasion: 'wedding',
+    guestCount: 200,
+    budgetMinor: 50_000_000,
+    eventDate: addDays(TODAY, 90),
+  })
   const analysis = analyzeEvent(event, TODAY)
 
   it('treats it as a large event and shifts budget toward catering and venue', () => {
@@ -174,10 +185,21 @@ describe('other decision rules', () => {
 describe('allocateBudget (Scenario 9 guard: allocations can never exceed the budget)', () => {
   it('always sums exactly to the budget, for awkward amounts and every rule combination', () => {
     const budgets = [0, 1, 7, 99, 101, 333_333, 1_000_003, 9_999_999_999, Number.MAX_SAFE_INTEGER]
-    const combos = [{}, { lowBudget: true }, { lowBudget: true, largeGuests: true, outdoor: true, children: true, shortNotice: true }]
+    const combos = [
+      {},
+      { lowBudget: true },
+      { lowBudget: true, largeGuests: true, outdoor: true, children: true, shortNotice: true },
+    ]
     for (const b of budgets) {
       for (const flags of combos) {
-        const lines = allocateBudget(b, { lowBudget: false, largeGuests: false, outdoor: false, children: false, shortNotice: false, ...flags })
+        const lines = allocateBudget(b, {
+          lowBudget: false,
+          largeGuests: false,
+          outdoor: false,
+          children: false,
+          shortNotice: false,
+          ...flags,
+        })
         expect(lines.every((l) => Number.isSafeInteger(l.amountMinor) && l.amountMinor >= 0)).toBe(true)
         expect(lines.reduce((s, l) => BigInt(l.amountMinor) + s, 0n)).toBe(BigInt(b))
       }

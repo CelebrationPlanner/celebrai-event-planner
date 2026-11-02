@@ -48,8 +48,13 @@ export function stepSchemas(today: string) {
       location: z.string().trim().max(120, 'Keep the location under 120 characters.'),
     }),
     z.object({
-      guestCount: z.string().regex(/^\d+$/, 'Enter the number of guests.').refine((v) => Number(v) >= 1 && Number(v) <= 5000, 'Guests must be between 1 and 5,000.'),
-      budget: z.string().refine((v) => (parseMoney(v) ?? 0) > 0, 'Enter a budget greater than zero (up to 2 decimals).'),
+      guestCount: z
+        .string()
+        .regex(/^\d+$/, 'Enter the number of guests.')
+        .refine((v) => Number(v) >= 1 && Number(v) <= 5000, 'Guests must be between 1 and 5,000.'),
+      budget: z
+        .string()
+        .refine((v) => (parseMoney(v) ?? 0) > 0, 'Enter a budget greater than zero (up to 2 decimals).'),
       currency: z.enum(CURRENCIES),
       venuePreference: z.enum(['indoor', 'outdoor', 'flexible']),
     }),
@@ -66,6 +71,7 @@ export type FormErrors = Partial<Record<keyof EventFormValues, string>>
 export function validateStep(step: number, values: EventFormValues, today: string): FormErrors {
   const result = stepSchemas(today)[step].safeParse(values)
   const errors: FormErrors = {}
-  if (!result.success) for (const issue of result.error.issues) errors[issue.path[0] as keyof EventFormValues] ??= issue.message
+  if (!result.success)
+    for (const issue of result.error.issues) errors[issue.path[0] as keyof EventFormValues] ??= issue.message
   return errors
 }

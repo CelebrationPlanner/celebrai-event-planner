@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useDashboard } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from './auth'
+import { useAuth } from './session'
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -18,8 +18,11 @@ const NAV = [
 ]
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
-    isActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ` +
+  `focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
+    isActive
+      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
   }`
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
@@ -54,8 +57,14 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         )}
       </div>
       <div className="border-t pt-4">
-        <p className="truncate px-3 pb-2 text-xs text-muted-foreground">{session?.user.is_anonymous ? 'Demo account' : session?.user.email}</p>
-        <button type="button" onClick={() => supabase.auth.signOut()} className={linkClass({ isActive: false }) + ' w-full'}>
+        <p className="truncate px-3 pb-2 text-xs text-muted-foreground">
+          {session?.user.is_anonymous ? 'Demo account' : session?.user.email}
+        </p>
+        <button
+          type="button"
+          onClick={() => supabase.auth.signOut()}
+          className={linkClass({ isActive: false }) + ' w-full'}
+        >
           <LogOut className="size-4" aria-hidden="true" />
           {session?.user.is_anonymous ? 'Exit demo' : 'Log out'}
         </button>
@@ -76,10 +85,15 @@ export default function AppShell() {
 
   return (
     <div className="min-h-dvh lg:pl-64">
-      <a href="#main" className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+      >
         Skip to content
       </a>
-      {navigation.state === 'loading' && <div className="fixed inset-x-0 top-0 z-50 h-0.5 animate-pulse bg-primary" aria-hidden="true" />}
+      {navigation.state === 'loading' && (
+        <div className="fixed inset-x-0 top-0 z-50 h-0.5 animate-pulse bg-primary" aria-hidden="true" />
+      )}
 
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col gap-8 border-r bg-sidebar p-5 lg:flex">
         <Logo to="/dashboard" />
@@ -106,7 +120,10 @@ export default function AppShell() {
       </header>
 
       {session.user.is_anonymous && (
-        <aside aria-label="Demo account notice" className="border-b bg-gold-soft px-4 py-2 text-sm text-gold-foreground">
+        <aside
+          aria-label="Demo account notice"
+          className="border-b bg-gold-soft px-4 py-2 text-sm text-gold-foreground"
+        >
           <div className="mx-auto flex max-w-6xl items-center gap-2">
             <Info className="size-4 shrink-0" aria-hidden="true" />
             <p>

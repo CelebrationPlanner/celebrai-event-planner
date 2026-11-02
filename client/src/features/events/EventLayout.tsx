@@ -23,7 +23,8 @@ export default function EventLayout() {
   const { data: event, isPending, error, refetch } = useEventQuery(eventId)
 
   if (isPending) return <LoadingBlock rows={4} label="Loading event" />
-  if (error && !(error instanceof ApiError && error.status === 404)) return <ErrorState error={error} onRetry={() => refetch()} />
+  if (error && !(error instanceof ApiError && error.status === 404))
+    return <ErrorState error={error} onRetry={() => refetch()} />
   if (!event) {
     return (
       <EmptyState
@@ -41,13 +42,18 @@ export default function EventLayout() {
 
   return (
     <>
-      <Link to="/dashboard" className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        to="/dashboard"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="size-4" aria-hidden="true" /> Dashboard
       </Link>
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-heading text-3xl leading-tight sm:text-4xl">{event.eventName}</h1>
-          <Badge variant="outline" className="capitalize">{event.status}</Badge>
+          <Badge variant="outline" className="capitalize">
+            {event.status}
+          </Badge>
         </div>
         <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
@@ -78,7 +84,8 @@ export default function EventLayout() {
                 to={t.to}
                 end
                 className={({ isActive }) =>
-                  `block rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
+                  `block rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap ` +
+                  `focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none ${
                     isActive ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                   }`
                 }

@@ -3,7 +3,14 @@ import { useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import { Field, selectClass } from '@/components/Field'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { api, errorMessage, fieldErrors } from '@/lib/api'
 import { todayISO } from '@/lib/dates'
@@ -31,7 +38,8 @@ export function EditEventDialog({ event, onClose }: { event: CelebrationEvent; o
       const local: Record<string, string> = {}
       if (v.eventName.trim().length < 1) local.eventName = 'Give your event a name.'
       if (budgetMinor === null) local.budgetMinor = 'Enter a non-negative amount (up to 2 decimals).'
-      if (guests !== null && !(Number.isInteger(guests) && guests >= 1 && guests <= 5000)) local.guestCount = 'Guests must be between 1 and 5,000.'
+      if (guests !== null && !(Number.isInteger(guests) && guests >= 1 && guests <= 5000))
+        local.guestCount = 'Guests must be between 1 and 5,000.'
       if (Object.keys(local).length) return Promise.reject(Object.assign(new Error('invalid'), { local }))
       return api.updateEvent(event.id, {
         occasion: (v.occasion || null) as Occasion | null,
@@ -54,7 +62,8 @@ export function EditEventDialog({ event, onClose }: { event: CelebrationEvent; o
       if (!Object.keys(found).length) toast.error(errorMessage(err))
     },
   })
-  const set = (key: keyof typeof v) => (e: { target: { value: string } }) => setV((s) => ({ ...s, [key]: e.target.value }))
+  const set = (key: keyof typeof v) => (e: { target: { value: string } }) =>
+    setV((s) => ({ ...s, [key]: e.target.value }))
 
   function submit(e: FormEvent) {
     e.preventDefault()
@@ -67,14 +76,18 @@ export function EditEventDialog({ event, onClose }: { event: CelebrationEvent; o
         <form onSubmit={submit} noValidate className="flex flex-col gap-4">
           <DialogHeader>
             <DialogTitle>Edit event details</DialogTitle>
-            <DialogDescription>Changes are saved to your event. Regenerate the plan afterwards to update it.</DialogDescription>
+            <DialogDescription>
+              Changes are saved to your event. Regenerate the plan afterwards to update it.
+            </DialogDescription>
           </DialogHeader>
           <Field label="Occasion" error={errors.occasion}>
             {(p) => (
               <select {...p} className={selectClass} value={v.occasion} onChange={set('occasion')}>
                 <option value="">Not decided</option>
                 {OCCASIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
                 ))}
               </select>
             )}
@@ -106,8 +119,12 @@ export function EditEventDialog({ event, onClose }: { event: CelebrationEvent; o
             )}
           </Field>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save'}</Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? 'Saving…' : 'Save'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

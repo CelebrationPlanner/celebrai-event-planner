@@ -77,10 +77,18 @@ function Bubble({ message }: { message: Pick<ChatMessage, 'role' | 'content'> })
   const mine = message.role === 'user'
   return (
     <div className={`flex gap-3 ${mine ? 'flex-row-reverse' : ''}`}>
-      <span className={`grid size-8 shrink-0 place-items-center rounded-full ${mine ? 'bg-coral-soft text-accent-foreground' : 'bg-secondary text-secondary-foreground'}`} aria-hidden="true">
+      <span
+        className={
+          `grid size-8 shrink-0 place-items-center rounded-full ` +
+          `${mine ? 'bg-coral-soft text-accent-foreground' : 'bg-secondary text-secondary-foreground'}`
+        }
+        aria-hidden="true"
+      >
         {mine ? <User className="size-4" /> : <Bot className="size-4" />}
       </span>
-      <p className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap ${mine ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+      <p
+        className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap ${mine ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+      >
         <span className="sr-only">{mine ? 'You: ' : 'Assistant: '}</span>
         {message.content}
       </p>
@@ -124,10 +132,21 @@ export default function PlannerPage() {
 
   return (
     <>
-      {!eventId && <PageHeader title="AI assistant" description="Describe your celebration in your own words. The assistant asks only for what’s missing." />}
+      {!eventId && (
+        <PageHeader
+          title="AI assistant"
+          description="Describe your celebration in your own words. The assistant asks only for what’s missing."
+        />
+      )}
       <div className={eventId ? 'grid gap-6 lg:grid-cols-[1fr_18rem]' : 'mx-auto max-w-3xl'}>
         <Card className="gap-0 overflow-hidden p-0">
-          <div ref={logRef} role="log" aria-label="Conversation" aria-live="polite" className="flex max-h-[32rem] min-h-64 flex-col gap-4 overflow-y-auto p-5">
+          <div
+            ref={logRef}
+            role="log"
+            aria-label="Conversation"
+            aria-live="polite"
+            className="flex max-h-[32rem] min-h-64 flex-col gap-4 overflow-y-auto p-5"
+          >
             {eventId && conversation.isPending ? (
               <Skeleton className="h-16" />
             ) : conversation.error ? (
@@ -143,7 +162,10 @@ export default function PlannerPage() {
                       <button
                         type="button"
                         onClick={() => setDraft(ex)}
-                        className="w-full rounded-xl border bg-background px-4 py-2.5 text-left text-sm hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                        className={
+                          'w-full rounded-xl border bg-background px-4 py-2.5 text-left text-sm hover:border-primary ' +
+                          'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none'
+                        }
                       >
                         {ex}
                       </button>
@@ -175,7 +197,9 @@ export default function PlannerPage() {
                 <AlertDescription>{errorMessage(chat.error)} Your message is kept below.</AlertDescription>
               </Alert>
             )}
-            <Label htmlFor={inputId} className="sr-only">Message the assistant</Label>
+            <Label htmlFor={inputId} className="sr-only">
+              Message the assistant
+            </Label>
             <Textarea
               id={inputId}
               rows={3}

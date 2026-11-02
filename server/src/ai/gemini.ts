@@ -2,14 +2,32 @@ import { ApiError, GoogleGenAI } from '@google/genai'
 import { AiError, type AIProvider } from './provider.ts'
 
 // The JSON Schema subset Gemini's responseJsonSchema accepts (see @google/genai typings).
-const SUPPORTED = new Set(['type', 'format', 'title', 'description', 'enum', 'items', 'prefixItems', 'minItems', 'maxItems', 'minimum', 'maximum', 'anyOf', 'oneOf', 'properties', 'additionalProperties', 'required'])
+const SUPPORTED = new Set([
+  'type',
+  'format',
+  'title',
+  'description',
+  'enum',
+  'items',
+  'prefixItems',
+  'minItems',
+  'maxItems',
+  'minimum',
+  'maximum',
+  'anyOf',
+  'oneOf',
+  'properties',
+  'additionalProperties',
+  'required',
+])
 
 function prune(node: unknown): unknown {
   if (Array.isArray(node)) return node.map(prune)
   if (node === null || typeof node !== 'object') return node
   const out: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(node)) {
-    if (key === 'properties') out[key] = Object.fromEntries(Object.entries(value as object).map(([k, v]) => [k, prune(v)]))
+    if (key === 'properties')
+      out[key] = Object.fromEntries(Object.entries(value as object).map(([k, v]) => [k, prune(v)]))
     else if (SUPPORTED.has(key)) out[key] = prune(value)
   }
   return out
@@ -47,7 +65,8 @@ export function createGeminiProvider(options: { apiKey: string; model: string; t
       try {
         text = await call(request).catch((err) => (isTransient(err) ? call(request) : Promise.reject(err)))
       } catch (err) {
-        if (err instanceof Error && (err.name === 'AbortError' || err.name === 'TimeoutError')) throw new AiError('timeout', 'The AI provider timed out.')
+        if (err instanceof Error && (err.name === 'AbortError' || err.name === 'TimeoutError'))
+          throw new AiError('timeout', 'The AI provider timed out.')
         // Log the status only; provider messages can echo request content.
         console.error(`AI provider error${err instanceof ApiError ? ` (HTTP ${err.status})` : ''}`)
         throw new AiError('unavailable', 'The AI provider is unavailable.')

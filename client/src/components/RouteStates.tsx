@@ -25,7 +25,9 @@ export function RouteError() {
       <TriangleAlert className="mb-4 size-8 text-coral" aria-hidden="true" />
       <h1 className="font-heading text-3xl">{notFound ? 'Page not found' : 'Something went wrong'}</h1>
       <p className="mt-2 text-muted-foreground">
-        {notFound ? 'That page doesn’t exist or has moved.' : 'An unexpected error occurred. Try again, or go back to your dashboard.'}
+        {notFound
+          ? 'That page doesn’t exist or has moved.'
+          : 'An unexpected error occurred. Try again, or go back to your dashboard.'}
       </p>
       <div className="mt-6 flex gap-2">
         {!notFound && <Button onClick={() => window.location.reload()}>Try again</Button>}

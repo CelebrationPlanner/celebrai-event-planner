@@ -14,7 +14,15 @@ const dedupe = <T>(items: T[], key: (t: T) => string) => {
  * Costs come from the allocation, dates from the engine, and the result is validated
  * against the shared schema before it can be saved.
  */
-export function buildPlan(input: { ai: AiPlan; event: CelebrationEvent; analysis: Analysis; budget: BudgetLine[]; tasks: PlannedTask[]; today: string; contextHash: string }): EventPlan {
+export function buildPlan(input: {
+  ai: AiPlan
+  event: CelebrationEvent
+  analysis: Analysis
+  budget: BudgetLine[]
+  tasks: PlannedTask[]
+  today: string
+  contextHash: string
+}): EventPlan {
   const { ai, event, analysis, budget, tasks, today } = input
   const allocation = new Map(budget.map((b) => [b.category, b.amountMinor]))
   const costed = new Set<string>()

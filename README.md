@@ -139,7 +139,7 @@ npm run dev:server
 npm run dev:client
 ```
 
-Checks: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`.
+Checks: `npm run format:check`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` (all run in GitHub Actions on every push; `npm run format` applies the Prettier style).
 
 ## Documentation
 

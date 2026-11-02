@@ -4,7 +4,12 @@ import { createApp } from './app.ts'
 import { loadEnv } from './config/env.ts'
 
 const CLIENT_URL = 'http://localhost:5173'
-const baseEnv = { NODE_ENV: 'test', CLIENT_URL, SUPABASE_URL: 'http://127.0.0.1:1', SUPABASE_ANON_KEY: 'test-anon-key-not-a-secret' }
+const baseEnv = {
+  NODE_ENV: 'test',
+  CLIENT_URL,
+  SUPABASE_URL: 'http://127.0.0.1:1',
+  SUPABASE_ANON_KEY: 'test-anon-key-not-a-secret',
+}
 const app = createApp(loadEnv(baseEnv))
 
 describe('GET /api/health', () => {
@@ -55,7 +60,10 @@ describe('request handling', () => {
   })
 
   it('rejects oversized bodies with 413 before authentication', async () => {
-    const res = await request(app).post('/api/events').set('Content-Type', 'application/json').send(JSON.stringify({ x: 'a'.repeat(110_000) }))
+    const res = await request(app)
+      .post('/api/events')
+      .set('Content-Type', 'application/json')
+      .send(JSON.stringify({ x: 'a'.repeat(110_000) }))
     expect(res.status).toBe(413)
     expect(res.body.error.code).toBe('PAYLOAD_TOO_LARGE')
   })
@@ -91,11 +99,20 @@ describe('loadEnv', () => {
   })
 
   it('selects the AI provider and treats a blank Anthropic key as not configured', () => {
-    expect(loadEnv({ ...baseEnv, AI_PROVIDER: 'claude', ANTHROPIC_API_KEY: '' })).toMatchObject({ AI_PROVIDER: 'claude', ANTHROPIC_API_KEY: undefined, CLAUDE_MODEL: 'claude-opus-5-5' })
+    expect(loadEnv({ ...baseEnv, AI_PROVIDER: 'claude', ANTHROPIC_API_KEY: '' })).toMatchObject({
+      AI_PROVIDER: 'claude',
+      ANTHROPIC_API_KEY: undefined,
+      CLAUDE_MODEL: 'claude-opus-5-5',
+    })
     expect(() => loadEnv({ ...baseEnv, AI_PROVIDER: 'openai' })).toThrow(/AI_PROVIDER/)
   })
 
   it('applies defaults', () => {
-    expect(loadEnv(baseEnv)).toMatchObject({ NODE_ENV: 'test', PORT: 5000, RATE_LIMIT_WINDOW_MS: 60_000, API_RATE_LIMIT_MAX_REQUESTS: 120 })
+    expect(loadEnv(baseEnv)).toMatchObject({
+      NODE_ENV: 'test',
+      PORT: 5000,
+      RATE_LIMIT_WINDOW_MS: 60_000,
+      API_RATE_LIMIT_MAX_REQUESTS: 120,
+    })
   })
 })

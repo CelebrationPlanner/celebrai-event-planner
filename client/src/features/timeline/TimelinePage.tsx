@@ -27,7 +27,8 @@ export default function TimelinePage() {
 
   if (tasksQuery.isPending || planQuery.isPending) return <LoadingBlock rows={4} label="Loading timeline" />
   const failed = tasksQuery.error ?? planQuery.error
-  if (failed) return <ErrorState error={failed} onRetry={() => Promise.all([tasksQuery.refetch(), planQuery.refetch()])} />
+  if (failed)
+    return <ErrorState error={failed} onRetry={() => Promise.all([tasksQuery.refetch(), planQuery.refetch()])} />
 
   const tasks = tasksQuery.data ?? []
   const plan = planQuery.data?.plan
@@ -40,14 +41,20 @@ export default function TimelinePage() {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <section aria-labelledby="prep-heading">
-        <h2 id="prep-heading" className="mb-3 text-lg font-semibold">Preparation milestones</h2>
+        <h2 id="prep-heading" className="mb-3 text-lg font-semibold">
+          Preparation milestones
+        </h2>
         {dated.length === 0 ? (
           <EmptyState
             icon={CalendarClock}
             title="No dated milestones"
             description={
               <>
-                Add due dates to tasks in the <Link to="../checklist" className="text-primary underline">checklist</Link> to see them here.
+                Add due dates to tasks in the{' '}
+                <Link to="../checklist" className="text-primary underline">
+                  checklist
+                </Link>{' '}
+                to see them here.
               </>
             }
           />
@@ -56,10 +63,15 @@ export default function TimelinePage() {
             <ol className="relative flex flex-col gap-6 border-l-2 border-secondary pl-6">
               {[...byDate].map(([date, items]) => (
                 <li key={date} className="relative">
-                  <span className="absolute top-1 -left-[1.95rem] size-3 rounded-full border-2 border-card bg-primary" aria-hidden="true" />
+                  <span
+                    className="absolute top-1 -left-[1.95rem] size-3 rounded-full border-2 border-card bg-primary"
+                    aria-hidden="true"
+                  />
                   <p className="text-sm font-semibold">
                     {formatDate(date, { weekday: 'short', day: 'numeric', month: 'short' })}{' '}
-                    <span className={`font-normal ${date < today ? 'text-destructive' : 'text-muted-foreground'}`}>· {relativeDays(date, today)}</span>
+                    <span className={`font-normal ${date < today ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      · {relativeDays(date, today)}
+                    </span>
                   </p>
                   <ul className="mt-2 flex flex-col gap-2">
                     {items.map((t) => {
@@ -68,7 +80,11 @@ export default function TimelinePage() {
                         <li key={t.id} className="flex items-start gap-2 text-sm">
                           <Icon className="mt-0.5 size-4 shrink-0 text-coral" aria-label={label} />
                           <span className={t.completed ? 'text-muted-foreground line-through' : ''}>{t.title}</span>
-                          {t.completed && <Badge variant="secondary" className="ml-auto">Done</Badge>}
+                          {t.completed && (
+                            <Badge variant="secondary" className="ml-auto">
+                              Done
+                            </Badge>
+                          )}
                         </li>
                       )
                     })}
@@ -77,32 +93,49 @@ export default function TimelinePage() {
               ))}
               {event.eventDate && (
                 <li className="relative">
-                  <span className="absolute top-1 -left-[1.95rem] size-3 rounded-full border-2 border-card bg-gold" aria-hidden="true" />
+                  <span
+                    className="absolute top-1 -left-[1.95rem] size-3 rounded-full border-2 border-card bg-gold"
+                    aria-hidden="true"
+                  />
                   <p className="flex items-center gap-2 text-sm font-semibold">
-                    <PartyPopper className="size-4 text-gold" aria-hidden="true" /> Event day · {formatDate(event.eventDate)}
+                    <PartyPopper className="size-4 text-gold" aria-hidden="true" /> Event day ·{' '}
+                    {formatDate(event.eventDate)}
                   </p>
                 </li>
               )}
             </ol>
-            {undated > 0 && <p className="mt-4 text-xs text-muted-foreground">{undated} task(s) without a due date aren’t shown.</p>}
+            {undated > 0 && (
+              <p className="mt-4 text-xs text-muted-foreground">{undated} task(s) without a due date aren’t shown.</p>
+            )}
           </Card>
         )}
       </section>
 
       <section aria-labelledby="day-heading">
-        <h2 id="day-heading" className="mb-3 text-lg font-semibold">Event-day schedule</h2>
+        <h2 id="day-heading" className="mb-3 text-lg font-semibold">
+          Event-day schedule
+        </h2>
         {!event.eventDate ? (
-          <EmptyState icon={CalendarClock} title="Date not set" description="The assistant will ask for the date before building a date-specific schedule." />
+          <EmptyState
+            icon={CalendarClock}
+            title="Date not set"
+            description="The assistant will ask for the date before building a date-specific schedule."
+          />
         ) : !plan ? (
-          <EmptyState icon={CalendarClock} title="No schedule yet" description="Generate a plan to get an hour-by-hour agenda for the day." />
+          <EmptyState
+            icon={CalendarClock}
+            title="No schedule yet"
+            description="Generate a plan to get an hour-by-hour agenda for the day."
+          />
         ) : (
           <ScheduleEditor key={planQuery.data?.version} eventId={event.id} schedule={plan.schedule} />
         )}
       </section>
 
       <p className="text-xs text-muted-foreground lg:col-span-2">
-        <strong className="font-medium">How deadlines are set:</strong> each task gets a typical lead time before the event, worked out in your time zone ({timeZone}). Deadlines are never in
-        the past or after the event; when time is short, bookings fall due today and are marked high priority.
+        <strong className="font-medium">How deadlines are set:</strong> each task gets a typical lead time before the
+        event, worked out in your time zone ({timeZone}). Deadlines are never in the past or after the event; when time
+        is short, bookings fall due today and are marked high priority.
       </p>
     </div>
   )

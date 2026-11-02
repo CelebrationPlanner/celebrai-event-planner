@@ -2,12 +2,25 @@ import type { Task } from '@celebrai/shared'
 import { describe, expect, it } from 'vitest'
 import { sortTasks, taskProgress } from './insights'
 
-const task = (title: string, priority: Task['priority'], dueDate: string | null, completed = false): Task =>
-  ({ id: title, eventId: 'e', title, priority, dueDate, completed, kind: 'preparation', createdAt: '', updatedAt: '' })
+const task = (title: string, priority: Task['priority'], dueDate: string | null, completed = false): Task => ({
+  id: title,
+  eventId: 'e',
+  title,
+  priority,
+  dueDate,
+  completed,
+  kind: 'preparation',
+  createdAt: '',
+  updatedAt: '',
+})
 
 describe('tasks', () => {
   it('computes completion progress', () => {
-    expect(taskProgress([task('a', 'low', null, true), task('b', 'low', null), task('c', 'low', null)])).toEqual({ done: 1, total: 3, percent: 33 })
+    expect(taskProgress([task('a', 'low', null, true), task('b', 'low', null), task('c', 'low', null)])).toEqual({
+      done: 1,
+      total: 3,
+      percent: 33,
+    })
     expect(taskProgress([])).toEqual({ done: 0, total: 0, percent: 0 })
   })
 

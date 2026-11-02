@@ -1,6 +1,18 @@
 // snake_case database rows → camelCase API objects. Enum columns are guaranteed by
 // CHECK constraints in the migration, so narrowing their types here is safe.
-import type { BudgetCategory, CelebrationEvent, CurrencyCode, EventStatus, Expense, InvitationTone, Occasion, Priority, Profile, Task, TaskKind } from '@celebrai/shared'
+import type {
+  BudgetCategory,
+  CelebrationEvent,
+  CurrencyCode,
+  EventStatus,
+  Expense,
+  InvitationTone,
+  Occasion,
+  Priority,
+  Profile,
+  Task,
+  TaskKind,
+} from '@celebrai/shared'
 import type { Database } from './database.types.ts'
 
 type Row<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']

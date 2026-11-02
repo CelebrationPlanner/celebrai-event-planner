@@ -4,7 +4,12 @@ import { execSync, spawnSync } from 'node:child_process'
 
 let status
 try {
-  status = JSON.parse(execSync('npx supabase status -o json', { cwd: new URL('../..', import.meta.url), stdio: ['ignore', 'pipe', 'ignore'] }).toString())
+  status = JSON.parse(
+    execSync('npx supabase status -o json', {
+      cwd: new URL('../..', import.meta.url),
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).toString(),
+  )
 } catch {
   console.error('Local Supabase is not running. Start it with: npx supabase start')
   process.exit(1)

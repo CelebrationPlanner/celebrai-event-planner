@@ -15,7 +15,8 @@ These rules always take priority:
 6. State uncertainty and assumptions plainly. Keep content suitable for all ages.`
 
 /** JSON-encodes untrusted data and escapes "<" so the text can never close the data block. */
-const untrusted = (value: unknown) => `<untrusted_input>\n${JSON.stringify(value, null, 2).replace(/</g, '\\u003c')}\n</untrusted_input>`
+const untrusted = (value: unknown) =>
+  `<untrusted_input>\n${JSON.stringify(value, null, 2).replace(/</g, '\\u003c')}\n</untrusted_input>`
 
 export const contextOf = (e: CelebrationEvent) => ({
   occasion: e.occasion,
@@ -31,7 +32,13 @@ export const contextOf = (e: CelebrationEvent) => ({
   additionalInstructions: e.additionalInstructions,
 })
 
-export function buildChatPrompt(input: { message: string; history: ChatMessage[]; context: object; today: string; missing: string[] }): string {
+export function buildChatPrompt(input: {
+  message: string
+  history: ChatMessage[]
+  context: object
+  today: string
+  missing: string[]
+}): string {
   return `Today's date is ${input.today}.
 
 Task:
@@ -44,7 +51,13 @@ Task:
 ${untrusted({ currentEventDetails: input.context, conversation: input.history.map((m) => ({ role: m.role, content: m.content })), latestMessage: input.message })}`
 }
 
-export function buildPlanPrompt(input: { event: CelebrationEvent; analysis: Analysis; budget: BudgetLine[]; tasks: PlannedTask[]; today: string }): string {
+export function buildPlanPrompt(input: {
+  event: CelebrationEvent
+  analysis: Analysis
+  budget: BudgetLine[]
+  tasks: PlannedTask[]
+  today: string
+}): string {
   const { event, analysis, budget, tasks } = input
   const money = (m: number) => formatMoney(m, event.currency)
   return `Today's date is ${input.today}. The event is ${analysis.daysUntil === null ? 'undated' : `${analysis.daysUntil} day(s) away`}.

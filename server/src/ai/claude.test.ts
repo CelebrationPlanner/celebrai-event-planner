@@ -19,13 +19,23 @@ vi.mock('@anthropic-ai/sdk', async (importOriginal) => {
 const { createClaudeProvider, toClaudeSchema } = await import('./claude.ts')
 const provider = createClaudeProvider({ apiKey: 'test', model: 'claude-opus-5-5', timeoutMs: 1000 })
 const schema = z.toJSONSchema(
-  z.object({ title: z.string().max(10), items: z.array(z.object({ n: z.number().int().min(0) })).min(1).max(3), note: z.string().nullable() }),
+  z.object({
+    title: z.string().max(10),
+    items: z
+      .array(z.object({ n: z.number().int().min(0) }))
+      .min(1)
+      .max(3),
+    note: z.string().nullable(),
+  }),
   { io: 'input' },
 )
 const request = { system: 'rules', prompt: 'plan please', schema, maxOutputTokens: 512 }
 const reply = (text: string, extra: object = {}) => ({
   stop_reason: 'end_turn',
-  content: [{ type: 'thinking', thinking: '', signature: 's' }, { type: 'text', text }],
+  content: [
+    { type: 'thinking', thinking: '', signature: 's' },
+    { type: 'text', text },
+  ],
   ...extra,
 })
 
@@ -36,7 +46,10 @@ beforeEach(() => {
 
 describe('toClaudeSchema', () => {
   it('closes every object and drops constraints structured outputs do not support', () => {
-    const out = toClaudeSchema(schema) as { additionalProperties: boolean; properties: Record<string, { items?: { additionalProperties: boolean } }> }
+    const out = toClaudeSchema(schema) as {
+      additionalProperties: boolean
+      properties: Record<string, { items?: { additionalProperties: boolean } }>
+    }
     const text = JSON.stringify(out)
     expect(out.additionalProperties).toBe(false)
     expect(out.properties.items.items?.additionalProperties).toBe(false)

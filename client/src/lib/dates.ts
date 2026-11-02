@@ -15,7 +15,10 @@ function toUTC(iso: string): number {
   return Date.UTC(y, m - 1, d)
 }
 
-export function formatDate(iso: string, options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }): string {
+export function formatDate(
+  iso: string,
+  options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' },
+): string {
   return new Intl.DateTimeFormat('en-IN', { ...options, timeZone: 'UTC' }).format(toUTC(iso))
 }
 

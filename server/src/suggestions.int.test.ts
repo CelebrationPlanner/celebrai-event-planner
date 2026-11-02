@@ -13,7 +13,16 @@ let eventId: string
 
 beforeAll(async () => {
   ;[alice, bob, demo] = await Promise.all([makeUser('sugg-alice'), makeUser('sugg-bob'), makeAnonUser()])
-  eventId = (await client(app, alice).post('/events', { occasion: 'birthday', eventName: 'Garden party', eventDate: addDays(today, 10), guestCount: 50, budgetMinor: 3_000_000, venuePreference: 'outdoor' })).body.data.id
+  eventId = (
+    await client(app, alice).post('/events', {
+      occasion: 'birthday',
+      eventName: 'Garden party',
+      eventDate: addDays(today, 10),
+      guestCount: 50,
+      budgetMinor: 3_000_000,
+      venuePreference: 'outdoor',
+    })
+  ).body.data.id
 })
 afterAll(() => deleteUsers([alice, bob, demo]))
 
@@ -24,7 +33,9 @@ describe('GET /events/:id/suggestions (engine only, nothing saved)', () => {
     const { budget, tasks, decisions, missing } = res.body.data
     expect(missing).toEqual([])
     expect(budget.reduce((s: number, b: { amountMinor: number }) => s + b.amountMinor, 0)).toBe(3_000_000)
-    expect(decisions.map((d: { rule: string }) => d.rule)).toEqual(expect.arrayContaining(['Outdoor venue', 'Short notice']))
+    expect(decisions.map((d: { rule: string }) => d.rule)).toEqual(
+      expect.arrayContaining(['Outdoor venue', 'Short notice']),
+    )
     for (const t of tasks) expect(t.dueDate >= today && t.dueDate <= addDays(today, 10), t.title).toBe(true)
 
     expect((await client(app, alice).get(`/events/${eventId}/budget`)).body.data.expenses).toEqual([])
@@ -35,7 +46,12 @@ describe('GET /events/:id/suggestions (engine only, nothing saved)', () => {
     const draft = (await client(app, alice).post('/events', { eventName: 'Undecided', budgetMinor: 0 })).body.data.id
     const { data } = (await client(app, alice).get(`/events/${draft}/suggestions`)).body
     expect(data.budget).toEqual([])
-    expect(data.missing.map((m: { field: string }) => m.field)).toEqual(['occasion', 'eventDate', 'guestCount', 'budgetMinor'])
+    expect(data.missing.map((m: { field: string }) => m.field)).toEqual([
+      'occasion',
+      'eventDate',
+      'guestCount',
+      'budgetMinor',
+    ])
     expect(data.tasks.every((t: { dueDate: string | null }) => t.dueDate === null)).toBe(true)
   })
 
@@ -70,7 +86,9 @@ describe('POST /events/:id/tasks/bulk', () => {
   it('rejects oversized batches and other users', async () => {
     const tooMany = Array.from({ length: 31 }, (_, i) => ({ title: `Task ${i}` }))
     expect((await client(app, alice).post(`/events/${eventId}/tasks/bulk`, { tasks: tooMany })).status).toBe(400)
-    expect((await client(app, bob).post(`/events/${eventId}/tasks/bulk`, { tasks: [{ title: 'Sneaky' }] })).status).toBe(404)
+    expect(
+      (await client(app, bob).post(`/events/${eventId}/tasks/bulk`, { tasks: [{ title: 'Sneaky' }] })).status,
+    ).toBe(404)
   })
 })
 
@@ -83,11 +101,17 @@ describe('PUT /events/:id/plan/schedule (plan editing)', () => {
 
   it('saves the edited agenda as a new, sorted, schema-valid plan version', async () => {
     const res = await client(app, demo).put(`/events/${demoEvent}/plan/schedule`, {
-      schedule: [{ time: '18:00', activity: 'Cake' }, { time: '15:30', activity: 'Doors open' }],
+      schedule: [
+        { time: '18:00', activity: 'Cake' },
+        { time: '15:30', activity: 'Doors open' },
+      ],
     })
     expect(res.status).toBe(200)
     expect(res.body.data.version).toBe(2)
-    expect(res.body.data.plan.schedule).toEqual([{ time: '15:30', activity: 'Doors open' }, { time: '18:00', activity: 'Cake' }])
+    expect(res.body.data.plan.schedule).toEqual([
+      { time: '15:30', activity: 'Doors open' },
+      { time: '18:00', activity: 'Cake' },
+    ])
     expect(eventPlanSchema.safeParse(res.body.data.plan).success).toBe(true)
   })
 
@@ -98,7 +122,13 @@ describe('PUT /events/:id/plan/schedule (plan editing)', () => {
   })
 
   it('validates times and requires an existing plan', async () => {
-    expect((await client(app, demo).put(`/events/${demoEvent}/plan/schedule`, { schedule: [{ time: '4 PM', activity: 'x' }] })).status).toBe(400)
+    expect(
+      (
+        await client(app, demo).put(`/events/${demoEvent}/plan/schedule`, {
+          schedule: [{ time: '4 PM', activity: 'x' }],
+        })
+      ).status,
+    ).toBe(400)
     const res = await client(app, alice).put(`/events/${eventId}/plan/schedule`, { schedule: [] })
     expect(res.status).toBe(404)
     expect(res.body.error.message).toBe('Plan not found.')

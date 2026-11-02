@@ -1,14 +1,32 @@
 import { z } from 'zod'
 import { isRealDate, isValidTimeZone } from './dates.ts'
 
-export const OCCASIONS = ['birthday', 'wedding', 'anniversary', 'baby_shower', 'engagement', 'corporate', 'family', 'festival'] as const
+export const OCCASIONS = [
+  'birthday',
+  'wedding',
+  'anniversary',
+  'baby_shower',
+  'engagement',
+  'corporate',
+  'family',
+  'festival',
+] as const
 export const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP'] as const
 export const EVENT_STATUSES = ['draft', 'planning', 'ready', 'completed'] as const
 export const VENUE_PREFERENCES = ['indoor', 'outdoor', 'flexible'] as const
 export const PRIORITIES = ['high', 'medium', 'low'] as const
 export const TASK_KINDS = ['preparation', 'vendor', 'invitation', 'shopping'] as const
 export const INVITATION_TONES = ['formal', 'friendly', 'traditional', 'modern'] as const
-export const BUDGET_CATEGORIES = ['venue', 'food', 'decoration', 'photography', 'entertainment', 'invitations', 'miscellaneous', 'contingency'] as const
+export const BUDGET_CATEGORIES = [
+  'venue',
+  'food',
+  'decoration',
+  'photography',
+  'entertainment',
+  'invitations',
+  'miscellaneous',
+  'contingency',
+] as const
 
 export type Occasion = (typeof OCCASIONS)[number]
 export type CurrencyCode = (typeof CURRENCIES)[number]
@@ -40,7 +58,8 @@ const eventContextShape = {
   additionalInstructions: text(1000),
 }
 
-const occasionRequired = (e: { status?: EventStatus; occasion?: Occasion | null }) => e.status === undefined || e.status === 'draft' || !!e.occasion
+const occasionRequired = (e: { status?: EventStatus; occasion?: Occasion | null }) =>
+  e.status === undefined || e.status === 'draft' || !!e.occasion
 const occasionMessage = { message: 'An occasion is required unless the event is a draft.', path: ['occasion'] }
 
 export const eventCreateSchema = z
@@ -73,12 +92,24 @@ export const taskCreateSchema = z.strictObject({
 export const tasksBulkSchema = z.strictObject({ tasks: z.array(taskCreateSchema).min(1).max(30) })
 
 export const taskUpdateSchema = z
-  .strictObject({ title: z.string().trim().min(2).max(200), priority: z.enum(PRIORITIES), dueDate: isoDateSchema.nullable(), kind: z.enum(TASK_KINDS), completed: z.boolean() })
+  .strictObject({
+    title: z.string().trim().min(2).max(200),
+    priority: z.enum(PRIORITIES),
+    dueDate: isoDateSchema.nullable(),
+    kind: z.enum(TASK_KINDS),
+    completed: z.boolean(),
+  })
   .partial()
 
 export const budgetUpdateSchema = z.strictObject({
   expenses: z
-    .array(z.strictObject({ category: z.enum(BUDGET_CATEGORIES), estimatedMinor: minorSchema, actualMinor: minorSchema.nullable() }))
+    .array(
+      z.strictObject({
+        category: z.enum(BUDGET_CATEGORIES),
+        estimatedMinor: minorSchema,
+        actualMinor: minorSchema.nullable(),
+      }),
+    )
     .min(1)
     .max(BUDGET_CATEGORIES.length)
     .refine((rows) => new Set(rows.map((r) => r.category)).size === rows.length, 'Each category can appear only once.'),
@@ -143,7 +174,17 @@ export interface Profile {
 
 export interface ApiErrorBody {
   error: {
-    code: 'VALIDATION_ERROR' | 'UNAUTHENTICATED' | 'FORBIDDEN' | 'NOT_FOUND' | 'PAYLOAD_TOO_LARGE' | 'RATE_LIMITED' | 'AI_UNAVAILABLE' | 'AI_TIMEOUT' | 'AI_INVALID_OUTPUT' | 'INTERNAL'
+    code:
+      | 'VALIDATION_ERROR'
+      | 'UNAUTHENTICATED'
+      | 'FORBIDDEN'
+      | 'NOT_FOUND'
+      | 'PAYLOAD_TOO_LARGE'
+      | 'RATE_LIMITED'
+      | 'AI_UNAVAILABLE'
+      | 'AI_TIMEOUT'
+      | 'AI_INVALID_OUTPUT'
+      | 'INTERNAL'
     message: string
     details?: unknown
   }

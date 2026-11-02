@@ -16,10 +16,13 @@
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces",
     "test": "npm run test --workspaces --if-present",
-    "lint": "oxlint client/src server/src shared/src"
+    "lint": "oxlint client/src server/src shared/src",
+    "format": "prettier --write \"{client,server,shared}/**/*.{ts,tsx,mjs}\"",
+    "format:check": "prettier --check \"{client,server,shared}/**/*.{ts,tsx,mjs}\""
   },
   "devDependencies": {
     "oxlint": "^1.90.0",
+    "prettier": "3.6.2",
     "typescript": "~7.0.2"
   }
 }

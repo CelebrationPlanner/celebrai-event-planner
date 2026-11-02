@@ -11,7 +11,16 @@ globalThis.ResizeObserver ??= class {
   disconnect() {}
 }
 window.matchMedia ??= (query: string) =>
-  ({ matches: false, media: query, onchange: null, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false }) as MediaQueryList
+  ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+    dispatchEvent: () => false,
+  }) as MediaQueryList
 Element.prototype.scrollIntoView ??= function () {}
 Element.prototype.scrollTo ??= function () {}
 Element.prototype.setPointerCapture ??= function () {}
@@ -23,4 +32,7 @@ configure({ asyncUtilTimeout: 5000 })
 
 // Component tests run against an in-memory backend instead of the network (see fakeBackend.ts).
 vi.mock('@/lib/supabase', async () => ({ supabase: (await import('./fakeBackend')).fakeSupabase }))
-vi.mock('@/lib/api', async (importOriginal) => ({ ...(await importOriginal<typeof import('@/lib/api')>()), api: (await import('./fakeBackend')).fakeApi }))
+vi.mock('@/lib/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/api')>()),
+  api: (await import('./fakeBackend')).fakeApi,
+}))

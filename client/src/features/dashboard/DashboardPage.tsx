@@ -1,6 +1,16 @@
-import { CalendarDays, CalendarPlus, CheckCircle2, CircleDashed, History, MapPin, PartyPopper, Users, Wallet } from 'lucide-react'
+import {
+  CalendarDays,
+  CalendarPlus,
+  CheckCircle2,
+  CircleDashed,
+  History,
+  MapPin,
+  PartyPopper,
+  Users,
+  Wallet,
+} from 'lucide-react'
 import { Link } from 'react-router'
-import { useAuth } from '@/app/auth'
+import { useAuth } from '@/app/session'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
 import { ErrorState, LoadingBlock } from '@/components/QueryStates'
@@ -27,11 +37,31 @@ function NewEventButton() {
 export default function DashboardPage() {
   const { data, isPending, error, refetch } = useDashboard()
   const { session } = useAuth()
-  const name = session?.user.is_anonymous ? 'there' : (session?.user.user_metadata.display_name as string | undefined) || 'there'
-  const header = <PageHeader title={`Hello, ${name}`} description="Here’s where your celebrations stand." actions={<NewEventButton />} />
+  const name = session?.user.is_anonymous
+    ? 'there'
+    : (session?.user.user_metadata.display_name as string | undefined) || 'there'
+  const header = (
+    <PageHeader
+      title={`Hello, ${name}`}
+      description="Here’s where your celebrations stand."
+      actions={<NewEventButton />}
+    />
+  )
 
-  if (isPending) return <>{header}<LoadingBlock rows={4} label="Loading your dashboard" /></>
-  if (error) return <>{header}<ErrorState error={error} onRetry={() => refetch()} /></>
+  if (isPending)
+    return (
+      <>
+        {header}
+        <LoadingBlock rows={4} label="Loading your dashboard" />
+      </>
+    )
+  if (error)
+    return (
+      <>
+        {header}
+        <ErrorState error={error} onRetry={() => refetch()} />
+      </>
+    )
 
   if (data.events.length === 0) {
     return (
@@ -65,7 +95,9 @@ export default function DashboardPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
         <section aria-labelledby="upcoming-heading">
-          <h2 id="upcoming-heading" className="mb-3 text-lg font-semibold">Upcoming events</h2>
+          <h2 id="upcoming-heading" className="mb-3 text-lg font-semibold">
+            Upcoming events
+          </h2>
           {upcoming.length === 0 ? (
             <p className="text-sm text-muted-foreground">No upcoming events. Past events are still in the sidebar.</p>
           ) : (
@@ -77,7 +109,10 @@ export default function DashboardPage() {
                     <Card className="gap-3 p-5 transition-shadow hover:shadow-md">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
-                          <Link to={`/events/${e.id}`} className="font-semibold hover:text-primary focus-visible:underline focus-visible:outline-none">
+                          <Link
+                            to={`/events/${e.id}`}
+                            className="font-semibold hover:text-primary focus-visible:underline focus-visible:outline-none"
+                          >
                             {e.eventName}
                           </Link>
                           <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -101,7 +136,9 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex gap-2">
                           {e.eventDate && <Badge variant="secondary">{relativeDays(e.eventDate, today)}</Badge>}
-                          <Badge variant="outline" className="capitalize">{e.status}</Badge>
+                          <Badge variant="outline" className="capitalize">
+                            {e.status}
+                          </Badge>
                         </div>
                       </div>
                       <div>
@@ -122,7 +159,9 @@ export default function DashboardPage() {
         </section>
 
         <section aria-labelledby="activity-heading">
-          <h2 id="activity-heading" className="mb-3 text-lg font-semibold">Recent activity</h2>
+          <h2 id="activity-heading" className="mb-3 text-lg font-semibold">
+            Recent activity
+          </h2>
           <Card className="p-5">
             {data.activity.length === 0 ? (
               <p className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -1,5 +1,13 @@
 import { z } from 'zod'
-import { BUDGET_CATEGORIES, INVITATION_TONES, isoDateSchema, minorSchema, PRIORITIES, TASK_KINDS, type CelebrationEvent } from './schemas.ts'
+import {
+  BUDGET_CATEGORIES,
+  INVITATION_TONES,
+  isoDateSchema,
+  minorSchema,
+  PRIORITIES,
+  TASK_KINDS,
+  type CelebrationEvent,
+} from './schemas.ts'
 
 const line = (max: number) => z.string().trim().min(1).max(max)
 export const timeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use 24-hour HH:MM.')
@@ -24,8 +32,19 @@ export const eventPlanSchema = z.object({
     )
     .min(1)
     .max(12),
-  budget: z.array(z.object({ category: z.enum(BUDGET_CATEGORIES), amountMinor: minorSchema, reasoning: line(400) })).length(BUDGET_CATEGORIES.length),
-  checklist: z.array(z.object({ title: line(200), priority: z.enum(PRIORITIES), kind: z.enum(TASK_KINDS), dueDate: isoDateSchema.nullable() })).max(30),
+  budget: z
+    .array(z.object({ category: z.enum(BUDGET_CATEGORIES), amountMinor: minorSchema, reasoning: line(400) }))
+    .length(BUDGET_CATEGORIES.length),
+  checklist: z
+    .array(
+      z.object({
+        title: line(200),
+        priority: z.enum(PRIORITIES),
+        kind: z.enum(TASK_KINDS),
+        dueDate: isoDateSchema.nullable(),
+      }),
+    )
+    .max(30),
   schedule: z.array(z.object({ time: timeOfDaySchema, activity: line(200) })).max(20),
   risks: z.array(z.object({ issue: line(300), mitigation: line(400) })).max(16),
   assumptions: z.array(line(300)).max(16),
@@ -60,8 +79,13 @@ export interface MissingDetail {
 /** Critical details, in the order the assistant should ask for them. */
 export function missingDetails(event: CelebrationEvent): MissingDetail[] {
   const missing: MissingDetail[] = []
-  if (!event.occasion) missing.push({ field: 'occasion', question: 'What are you celebrating — a birthday, wedding, anniversary or something else?' })
-  if (!event.eventDate) missing.push({ field: 'eventDate', question: 'What date is the event? I need it to build a realistic schedule.' })
+  if (!event.occasion)
+    missing.push({
+      field: 'occasion',
+      question: 'What are you celebrating — a birthday, wedding, anniversary or something else?',
+    })
+  if (!event.eventDate)
+    missing.push({ field: 'eventDate', question: 'What date is the event? I need it to build a realistic schedule.' })
   if (!event.guestCount) missing.push({ field: 'guestCount', question: 'Roughly how many guests are you expecting?' })
   if (!event.budgetMinor) missing.push({ field: 'budgetMinor', question: 'What’s your total budget?' })
   return missing

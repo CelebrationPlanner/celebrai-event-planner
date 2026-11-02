@@ -3,7 +3,7 @@ import { LogOut } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
-import { useAuth } from '@/app/auth'
+import { useAuth } from '@/app/session'
 import { Field, selectClass } from '@/components/Field'
 import { PageHeader } from '@/components/PageHeader'
 import { ErrorState, LoadingBlock } from '@/components/QueryStates'
@@ -38,7 +38,8 @@ function ProfileForm({ profile }: { profile: Profile }) {
 
   function submit(e: FormEvent) {
     e.preventDefault()
-    if (!name.trim() || name.trim().length > 80) return setErrors({ displayName: 'Enter a name between 1 and 80 characters.' })
+    if (!name.trim() || name.trim().length > 80)
+      return setErrors({ displayName: 'Enter a name between 1 and 80 characters.' })
     save.mutate()
   }
 
@@ -60,7 +61,12 @@ function ProfileForm({ profile }: { profile: Profile }) {
         </Field>
         <Field label="Default currency">
           {(p) => (
-            <select {...p} className={selectClass} value={currency} onChange={(e) => setCurrency(e.target.value as CurrencyCode)}>
+            <select
+              {...p}
+              className={selectClass}
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
+            >
               {CURRENCIES.map((c) => (
                 <option key={c}>{c}</option>
               ))}
@@ -85,14 +91,22 @@ export default function SettingsPage() {
       <PageHeader title="Settings" description="Your profile and planning preferences." />
 
       <Card className="p-6">
-        {isPending ? <LoadingBlock rows={3} label="Loading profile" /> : error ? <ErrorState error={error} onRetry={() => refetch()} /> : <ProfileForm profile={data} />}
+        {isPending ? (
+          <LoadingBlock rows={3} label="Loading profile" />
+        ) : error ? (
+          <ErrorState error={error} onRetry={() => refetch()} />
+        ) : (
+          <ProfileForm profile={data} />
+        )}
       </Card>
 
       <Card className="mt-6 gap-4 p-6">
         <div>
           <h2 className="text-lg font-semibold">Account</h2>
           <p className="text-sm text-muted-foreground">
-            {anonymous ? 'You’re using a temporary demo account. Your data is private to this browser session.' : `Signed in as ${session?.user.email}.`}
+            {anonymous
+              ? 'You’re using a temporary demo account. Your data is private to this browser session.'
+              : `Signed in as ${session?.user.email}.`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

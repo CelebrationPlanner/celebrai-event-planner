@@ -2,9 +2,18 @@ import { describe, expect, it } from 'vitest'
 import { summarizeBudget } from './budget.ts'
 import type { BudgetCategory } from './schemas.ts'
 import { addDays, daysBetween, todayInTimeZone } from './dates.ts'
-import { budgetUpdateSchema, eventCreateSchema, eventUpdateSchema, isoDateSchema, minorSchema, profileUpdateSchema, taskCreateSchema } from './schemas.ts'
+import {
+  budgetUpdateSchema,
+  eventCreateSchema,
+  eventUpdateSchema,
+  isoDateSchema,
+  minorSchema,
+  profileUpdateSchema,
+  taskCreateSchema,
+} from './schemas.ts'
 
-const row = (category: BudgetCategory, estimatedMinor: number, actualMinor: number | null = null) => ({ category, estimatedMinor, actualMinor }) as const
+const row = (category: BudgetCategory, estimatedMinor: number, actualMinor: number | null = null) =>
+  ({ category, estimatedMinor, actualMinor }) as const
 
 describe('summarizeBudget', () => {
   it('balances when allocations equal the budget', () => {
@@ -54,13 +63,22 @@ describe('dates', () => {
 describe('schemas', () => {
   it('accepts only non-negative safe integer money', () => {
     for (const ok of [0, 1, Number.MAX_SAFE_INTEGER]) expect(minorSchema.safeParse(ok).success).toBe(true)
-    for (const bad of [-1, 1.5, Number.MAX_SAFE_INTEGER + 1, '100', Number.NaN]) expect(minorSchema.safeParse(bad).success).toBe(false)
+    for (const bad of [-1, 1.5, Number.MAX_SAFE_INTEGER + 1, '100', Number.NaN])
+      expect(minorSchema.safeParse(bad).success).toBe(false)
   })
 
   it('defaults a new event and requires an occasion unless it is a draft', () => {
     const parsed = eventCreateSchema.parse({ occasion: 'birthday', eventName: 'Party', budgetMinor: 3_000_000 })
-    expect(parsed).toMatchObject({ status: 'planning', currency: 'INR', venuePreference: 'flexible', eventDate: null, guestCount: null })
-    expect(eventCreateSchema.safeParse({ occasion: null, eventName: 'X', budgetMinor: 1, status: 'planning' }).success).toBe(false)
+    expect(parsed).toMatchObject({
+      status: 'planning',
+      currency: 'INR',
+      venuePreference: 'flexible',
+      eventDate: null,
+      guestCount: null,
+    })
+    expect(
+      eventCreateSchema.safeParse({ occasion: null, eventName: 'X', budgetMinor: 1, status: 'planning' }).success,
+    ).toBe(false)
     expect(eventCreateSchema.parse({ occasion: null, eventName: 'X', budgetMinor: 1 }).status).toBe('draft')
   })
 

@@ -22,7 +22,7 @@ import * as m from 'motion/react-m'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
-import { startDemo } from '@/app/auth'
+import { startDemo } from '@/app/session'
 import { Logo } from '@/components/Logo'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -32,27 +32,85 @@ import type { Occasion } from '@/types'
 const EXAMPLES: Array<{ occasion: Occasion; icon: typeof Cake; title: string; example: string }> = [
   { occasion: 'birthday', icon: Cake, title: 'Birthdays', example: 'A princess party for 40 in Pune on ₹25,000' },
   { occasion: 'wedding', icon: Heart, title: 'Weddings', example: '200 guests, three functions, one realistic budget' },
-  { occasion: 'anniversary', icon: Gem, title: 'Anniversaries', example: 'An intimate dinner for 20 that feels special' },
-  { occasion: 'baby_shower', icon: Baby, title: 'Baby showers', example: 'A daytime gathering with games and a light menu' },
-  { occasion: 'engagement', icon: Gem, title: 'Engagements', example: 'Ring ceremony, décor and family-friendly timing' },
-  { occasion: 'corporate', icon: Briefcase, title: 'Corporate events', example: 'Team offsite for 60 with dietary needs covered' },
-  { occasion: 'family', icon: Users, title: 'Family celebrations', example: 'A reunion that works for grandparents and kids' },
+  {
+    occasion: 'anniversary',
+    icon: Gem,
+    title: 'Anniversaries',
+    example: 'An intimate dinner for 20 that feels special',
+  },
+  {
+    occasion: 'baby_shower',
+    icon: Baby,
+    title: 'Baby showers',
+    example: 'A daytime gathering with games and a light menu',
+  },
+  {
+    occasion: 'engagement',
+    icon: Gem,
+    title: 'Engagements',
+    example: 'Ring ceremony, décor and family-friendly timing',
+  },
+  {
+    occasion: 'corporate',
+    icon: Briefcase,
+    title: 'Corporate events',
+    example: 'Team offsite for 60 with dietary needs covered',
+  },
+  {
+    occasion: 'family',
+    icon: Users,
+    title: 'Family celebrations',
+    example: 'A reunion that works for grandparents and kids',
+  },
   { occasion: 'festival', icon: Flame, title: 'Festivals', example: 'Diwali get-together with a home-décor budget' },
 ]
 
 const STEPS = [
-  { title: 'Describe your celebration', body: 'Type it the way you’d tell a friend — who, where, when, how many and your budget.' },
-  { title: 'Answer only what’s missing', body: 'CelebrAI picks out what you’ve already said and asks just the questions that change the plan.' },
-  { title: 'Get a plan you can edit', body: 'Theme, budget, checklist, timeline and invitation — each recommendation explains why.' },
+  {
+    title: 'Describe your celebration',
+    body: 'Type it the way you’d tell a friend — who, where, when, how many and your budget.',
+  },
+  {
+    title: 'Answer only what’s missing',
+    body: 'CelebrAI picks out what you’ve already said and asks just the questions that change the plan.',
+  },
+  {
+    title: 'Get a plan you can edit',
+    body: 'Theme, budget, checklist, timeline and invitation — each recommendation explains why.',
+  },
 ]
 
 const FEATURES = [
-  { icon: MessageSquareText, title: 'Context-aware assistant', body: 'Understands natural language and remembers your event details during planning.' },
-  { icon: Wallet, title: 'Smart budget planner', body: 'Category allocations, actual spend and overrun warnings, with backend-checked totals.' },
-  { icon: ListChecks, title: 'Automatic checklist', body: 'Tasks prioritised by urgency, with realistic due dates — never in the past.' },
-  { icon: CalendarClock, title: 'Event timeline', body: 'Preparation milestones, vendor deadlines and an hour-by-hour event-day schedule.' },
-  { icon: Mail, title: 'Invitation studio', body: 'Formal, friendly, traditional or modern invitations you can edit, copy and share.' },
-  { icon: ShieldAlert, title: 'Risks & contingencies', body: 'Flags what could go wrong and what to do about it before it happens.' },
+  {
+    icon: MessageSquareText,
+    title: 'Context-aware assistant',
+    body: 'Understands natural language and remembers your event details during planning.',
+  },
+  {
+    icon: Wallet,
+    title: 'Smart budget planner',
+    body: 'Category allocations, actual spend and overrun warnings, with backend-checked totals.',
+  },
+  {
+    icon: ListChecks,
+    title: 'Automatic checklist',
+    body: 'Tasks prioritised by urgency, with realistic due dates — never in the past.',
+  },
+  {
+    icon: CalendarClock,
+    title: 'Event timeline',
+    body: 'Preparation milestones, vendor deadlines and an hour-by-hour event-day schedule.',
+  },
+  {
+    icon: Mail,
+    title: 'Invitation studio',
+    body: 'Formal, friendly, traditional or modern invitations you can edit, copy and share.',
+  },
+  {
+    icon: ShieldAlert,
+    title: 'Risks & contingencies',
+    body: 'Flags what could go wrong and what to do about it before it happens.',
+  },
 ]
 
 const DECISIONS = [
@@ -107,7 +165,8 @@ function PlanPreview() {
       <div className="mt-5 rounded-2xl bg-secondary p-4">
         <p className="text-sm font-semibold text-secondary-foreground">Theme: Pastel Princess Garden</p>
         <p className="mt-1 text-sm text-secondary-foreground/80">
-          <span className="font-medium">Why:</span> she loves princesses, and balloon décor is the most affordable way to transform a hall.
+          <span className="font-medium">Why:</span> she loves princesses, and balloon décor is the most affordable way
+          to transform a hall.
         </p>
       </div>
 
@@ -127,11 +186,14 @@ function PlanPreview() {
 
       <ul className="mt-5 space-y-2 text-sm">
         <li className="flex items-center gap-2">
-          <Check className="size-4 text-primary" aria-hidden="true" /> <span className="text-muted-foreground line-through">Book the venue</span>
+          <Check className="size-4 text-primary" aria-hidden="true" />{' '}
+          <span className="text-muted-foreground line-through">Book the venue</span>
         </li>
         <li className="flex items-center gap-2">
           <span className="size-4 rounded border" aria-hidden="true" /> Book magician or game host
-          <Badge variant="outline" className="ml-auto border-coral text-accent-foreground">Urgent</Badge>
+          <Badge variant="outline" className="ml-auto border-coral text-accent-foreground">
+            Urgent
+          </Badge>
         </li>
         <li className="flex items-center gap-2">
           <span className="size-4 rounded border" aria-hidden="true" /> Send invitations
@@ -149,9 +211,15 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <Logo />
           <nav aria-label="Primary" className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-            <a href="#examples" className="hover:text-foreground">Occasions</a>
-            <a href="#how" className="hover:text-foreground">How it works</a>
-            <a href="#features" className="hover:text-foreground">Features</a>
+            <a href="#examples" className="hover:text-foreground">
+              Occasions
+            </a>
+            <a href="#how" className="hover:text-foreground">
+              How it works
+            </a>
+            <a href="#features" className="hover:text-foreground">
+              Features
+            </a>
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" asChild>
@@ -181,12 +249,23 @@ export default function LandingPage() {
                   Start planning <ArrowRight aria-hidden="true" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="h-11 px-5 text-base" onClick={demo.run} disabled={demo.pending}>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-11 px-5 text-base"
+                onClick={demo.run}
+                disabled={demo.pending}
+              >
                 {demo.pending ? 'Preparing your demo…' : 'Explore the demo'}
               </Button>
             </div>
             <ul className="mt-8 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-              {['Budget totals verified by the backend', 'Asks before it assumes', 'Estimates clearly labelled', 'Never claims a venue is available'].map((t) => (
+              {[
+                'Budget totals verified by the backend',
+                'Asks before it assumes',
+                'Estimates clearly labelled',
+                'Never claims a venue is available',
+              ].map((t) => (
                 <li key={t} className="flex items-center gap-2">
                   <Check className="size-4 text-primary" aria-hidden="true" /> {t}
                 </li>
@@ -199,19 +278,28 @@ export default function LandingPage() {
         <section id="examples" className="border-y bg-card py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <h2 className="font-heading text-4xl">Plan any occasion</h2>
-            <p className="mt-2 max-w-2xl text-muted-foreground">Pick an occasion to start a plan with it pre-selected.</p>
+            <p className="mt-2 max-w-2xl text-muted-foreground">
+              Pick an occasion to start a plan with it pre-selected.
+            </p>
             <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {EXAMPLES.map(({ occasion, icon: Icon, title, example }) => (
                 <li key={occasion}>
                   <Link
                     to={`/events/new?occasion=${occasion}`}
-                    className="group flex h-full flex-col rounded-2xl border bg-background p-5 transition-shadow hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                    className={
+                      'group flex h-full flex-col rounded-2xl border bg-background p-5 transition-shadow ' +
+                      'hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none'
+                    }
                   >
                     <Icon className="size-5 text-coral" aria-hidden="true" />
                     <span className="mt-3 font-semibold">{title}</span>
                     <span className="mt-1 text-sm text-muted-foreground">{example}</span>
                     <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
-                      Plan this <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                      Plan this{' '}
+                      <ArrowRight
+                        className="size-3.5 transition-transform group-hover:translate-x-0.5"
+                        aria-hidden="true"
+                      />
                     </span>
                   </Link>
                 </li>
@@ -225,7 +313,9 @@ export default function LandingPage() {
           <ol className="mt-10 grid gap-6 md:grid-cols-3">
             {STEPS.map((s, i) => (
               <li key={s.title} className="rounded-2xl border bg-card p-6">
-                <span className="grid size-9 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">{i + 1}</span>
+                <span className="grid size-9 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                  {i + 1}
+                </span>
                 <h3 className="mt-4 text-lg font-semibold">{s.title}</h3>
                 <p className="mt-1 text-muted-foreground">{s.body}</p>
               </li>
@@ -237,7 +327,10 @@ export default function LandingPage() {
             <ul className="mt-6 grid gap-4 sm:grid-cols-2">
               {DECISIONS.map(({ icon: Icon, when, then }) => (
                 <li key={when} className="flex gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-card text-primary" aria-hidden="true">
+                  <span
+                    className="grid size-9 shrink-0 place-items-center rounded-xl bg-card text-primary"
+                    aria-hidden="true"
+                  >
                     <Icon className="size-4" />
                   </span>
                   <p className="text-secondary-foreground">
@@ -265,7 +358,12 @@ export default function LandingPage() {
         </section>
 
         <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <div className="flex flex-col items-start gap-6 rounded-3xl bg-primary p-8 text-primary-foreground sm:p-12 md:flex-row md:items-center md:justify-between">
+          <div
+            className={
+              'flex flex-col items-start gap-6 rounded-3xl bg-primary p-8 ' +
+              'text-primary-foreground sm:p-12 md:flex-row md:items-center md:justify-between'
+            }
+          >
             <div>
               <h2 className="font-heading text-3xl sm:text-4xl">Ready to plan your next celebration?</h2>
               <p className="mt-2 text-primary-foreground/85">Start with a sentence. CelebrAI does the organising.</p>
@@ -285,8 +383,12 @@ export default function LandingPage() {
             <p>Costs are estimates, not vendor quotations. Always confirm venue availability directly.</p>
           </div>
           <nav aria-label="Footer" className="flex gap-4">
-            <Link to="/login" className="hover:text-foreground">Log in</Link>
-            <Link to="/signup" className="hover:text-foreground">Sign up</Link>
+            <Link to="/login" className="hover:text-foreground">
+              Log in
+            </Link>
+            <Link to="/signup" className="hover:text-foreground">
+              Sign up
+            </Link>
             <button type="button" onClick={demo.run} disabled={demo.pending} className="hover:text-foreground">
               Demo
             </button>

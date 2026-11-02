@@ -1,5 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle2, ChevronDown, Clock, Compass, Lightbulb, Palette, Pencil, ShieldAlert, Sparkles, Trash2, Wallet } from 'lucide-react'
+import {
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  Compass,
+  Lightbulb,
+  Palette,
+  Pencil,
+  ShieldAlert,
+  Sparkles,
+  Trash2,
+  Wallet,
+} from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
@@ -9,7 +21,14 @@ import { StatCard } from '@/components/StatCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { api, errorMessage } from '@/lib/api'
 import { daysBetween, todayISO } from '@/lib/dates'
 import { taskProgress } from '@/lib/insights'
@@ -37,10 +56,14 @@ function DeleteEventDialog({ eventId, name, onClose }: { eventId: string; name: 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete this event?</DialogTitle>
-          <DialogDescription>“{name}” and its plan, budget, checklist and conversation will be permanently deleted.</DialogDescription>
+          <DialogDescription>
+            “{name}” and its plan, budget, checklist and conversation will be permanently deleted.
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button variant="destructive" onClick={() => remove.mutate()} disabled={remove.isPending}>
             {remove.isPending ? 'Deleting…' : 'Delete event'}
           </Button>
@@ -74,13 +97,28 @@ export default function EventOverviewPage() {
       </div>
 
       <section aria-label="Event status" className="grid gap-4 sm:grid-cols-3">
-        <StatCard icon={Clock} label="Days to go" value={daysLeft ?? '—'} hint={daysLeft === null ? 'Set a date to schedule tasks' : undefined} />
-        <StatCard icon={CheckCircle2} label="Tasks done" value={`${progress.done}/${progress.total}`} hint={`${progress.percent}% complete`} tone="coral" />
+        <StatCard
+          icon={Clock}
+          label="Days to go"
+          value={daysLeft ?? '—'}
+          hint={daysLeft === null ? 'Set a date to schedule tasks' : undefined}
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label="Tasks done"
+          value={`${progress.done}/${progress.total}`}
+          hint={`${progress.percent}% complete`}
+          tone="coral"
+        />
         <StatCard
           icon={Wallet}
           label="Allocated"
           value={summary ? formatMoney(summary.estimatedMinor, event.currency) : '—'}
-          hint={summary?.overrunMinor ? `Over by ${formatMoney(summary.overrunMinor, event.currency)}` : `of ${formatMoney(event.budgetMinor, event.currency)}`}
+          hint={
+            summary?.overrunMinor
+              ? `Over by ${formatMoney(summary.overrunMinor, event.currency)}`
+              : `of ${formatMoney(event.budgetMinor, event.currency)}`
+          }
           tone="gold"
         />
       </section>
@@ -139,7 +177,9 @@ export default function EventOverviewPage() {
           )}
 
           <section aria-labelledby="recs-heading">
-            <h2 id="recs-heading" className="mb-3 text-lg font-semibold">Recommendations</h2>
+            <h2 id="recs-heading" className="mb-3 text-lg font-semibold">
+              Recommendations
+            </h2>
             <ul className="grid gap-4 md:grid-cols-2">
               {saved.plan.recommendations.map((r) => (
                 <li key={r.category + r.recommendation}>
@@ -148,15 +188,22 @@ export default function EventOverviewPage() {
                       <Badge variant="outline">{r.category}</Badge>
                       {r.estimatedCostMinor !== null && (
                         <span className="text-sm font-medium">
-                          ≈ {formatMoney(r.estimatedCostMinor, event.currency)} <span className="sr-only">estimated</span>
+                          ≈ {formatMoney(r.estimatedCostMinor, event.currency)}{' '}
+                          <span className="sr-only">estimated</span>
                         </span>
                       )}
                     </div>
                     <p className="font-medium">{r.recommendation}</p>
                     <p className="text-sm text-muted-foreground">{r.explanation}</p>
                     <details className="group text-sm">
-                      <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded font-medium text-primary focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none">
-                        Why? <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+                      <summary
+                        className={
+                          'inline-flex cursor-pointer list-none items-center gap-1 rounded font-medium ' +
+                          'text-primary focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none'
+                        }
+                      >
+                        Why?{' '}
+                        <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
                       </summary>
                       <p className="mt-2">{r.reasoning}</p>
                       {r.assumptions.length > 0 && (
@@ -204,7 +251,9 @@ export default function EventOverviewPage() {
       )}
 
       {dialog === 'edit' && <EditEventDialog event={event} onClose={() => setDialog(null)} />}
-      {dialog === 'delete' && <DeleteEventDialog eventId={event.id} name={event.eventName} onClose={() => setDialog(null)} />}
+      {dialog === 'delete' && (
+        <DeleteEventDialog eventId={event.id} name={event.eventName} onClose={() => setDialog(null)} />
+      )}
     </div>
   )
 }

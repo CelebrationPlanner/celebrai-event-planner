@@ -6,8 +6,18 @@ import { createApp } from './app.ts'
 import { client, deleteUsers, makeAnonUser, makeUser, testEnv, type TestUser } from './test/integration.ts'
 
 const empty: AiChat['extracted'] = {
-  occasion: null, eventName: null, eventDate: null, location: null, guestCount: null, budgetAmount: null,
-  currency: null, venuePreference: null, themePreferences: [], ageGroup: null, dietaryRequirements: [], additionalInstructions: null,
+  occasion: null,
+  eventName: null,
+  eventDate: null,
+  location: null,
+  guestCount: null,
+  budgetAmount: null,
+  currency: null,
+  venuePreference: null,
+  themePreferences: [],
+  ageGroup: null,
+  dietaryRequirements: [],
+  additionalInstructions: null,
 }
 let calls = 0
 const ai: AIProvider = { name: 'fake', generateJson: async () => (calls++, { reply: 'Noted.', extracted: empty }) }
@@ -24,10 +34,22 @@ afterAll(() => deleteUsers([alice, bob, ...anons]))
 
 describe('database enforces the limits the API relies on', () => {
   it('rejects oversized tags written directly through the Data API (prompt inflation)', async () => {
-    const id = (await client(createApp(testEnv()), alice).post('/events', { occasion: 'birthday', eventName: 'Direct write', budgetMinor: 100 })).body.data.id
-    const { error } = await alice.db.from('events').update({ theme_preferences: ['x'.repeat(5000)] }).eq('id', id)
+    const id = (
+      await client(createApp(testEnv()), alice).post('/events', {
+        occasion: 'birthday',
+        eventName: 'Direct write',
+        budgetMinor: 100,
+      })
+    ).body.data.id
+    const { error } = await alice.db
+      .from('events')
+      .update({ theme_preferences: ['x'.repeat(5000)] })
+      .eq('id', id)
     expect(error?.code).toBe('23514') // check_violation
-    const ok = await alice.db.from('events').update({ dietary_requirements: ['Vegan'] }).eq('id', id)
+    const ok = await alice.db
+      .from('events')
+      .update({ dietary_requirements: ['Vegan'] })
+      .eq('id', id)
     expect(ok.error).toBeNull()
   })
 })
@@ -39,7 +61,8 @@ describe('AI spend limits', () => {
     const blocked = await client(app, anons[0]).post('/planner/chat', { message: 'two' })
     expect(blocked.status).toBe(429)
     expect(blocked.body.error.message).toMatch(/today’s AI planning limit/)
-    for (const m of ['a', 'b', 'c']) expect((await client(app, alice).post('/planner/chat', { message: m })).status).toBe(200)
+    for (const m of ['a', 'b', 'c'])
+      expect((await client(app, alice).post('/planner/chat', { message: m })).status).toBe(200)
     expect((await client(app, alice).post('/planner/chat', { message: 'd' })).status).toBe(429)
   })
 
@@ -66,7 +89,11 @@ describe('defensive handling of stored values', () => {
   it('keeps working when a user stores an invalid time zone directly', async () => {
     const { error } = await bob.db.from('profiles').update({ time_zone: 'Not/AZone' }).eq('id', bob.id)
     expect(error).toBeNull()
-    const res = await client(createApp(testEnv()), bob).post('/events', { occasion: 'family', eventName: 'Still works', budgetMinor: 100 })
+    const res = await client(createApp(testEnv()), bob).post('/events', {
+      occasion: 'family',
+      eventName: 'Still works',
+      budgetMinor: 100,
+    })
     expect(res.status).toBe(201)
   })
 })

@@ -22,7 +22,6 @@ import { supabase } from './supabase'
 
 export { ApiError }
 
-
 const BASE = import.meta.env.VITE_API_BASE_URL
 const AI_TIMEOUT_MS = 90_000 // above the server's 75 s AI deadline, so the server's clear error arrives first
 const TIMEOUT_MS = 20_000 // generous: a sleeping free-tier backend can take a while to wake (D12)
@@ -34,13 +33,20 @@ async function request<T>(method: string, path: string, body?: unknown, timeoutM
   try {
     res = await fetch(`${BASE}${path}`, {
       method,
-      headers: { ...(body !== undefined && { 'Content-Type': 'application/json' }), ...(token && { Authorization: `Bearer ${token}` }) },
+      headers: {
+        ...(body !== undefined && { 'Content-Type': 'application/json' }),
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: AbortSignal.timeout(timeoutMs),
     })
   } catch (err) {
     if (err instanceof DOMException && err.name === 'TimeoutError') {
-      throw new ApiError(0, 'TIMEOUT', 'The server took too long to respond. It may be waking up — please try again in a moment.')
+      throw new ApiError(
+        0,
+        'TIMEOUT',
+        'The server took too long to respond. It may be waking up — please try again in a moment.',
+      )
     }
     throw new ApiError(0, 'NETWORK', 'Can’t reach the CelebrAI server. Check your connection and try again.')
   }
@@ -51,14 +57,24 @@ async function request<T>(method: string, path: string, body?: unknown, timeoutM
     // An expired or revoked session: sign out locally so protected screens redirect to login.
     if (res.status === 401 && token) await supabase.auth.signOut()
     const error = json?.error
-    throw new ApiError(res.status, error?.code ?? 'INTERNAL', error?.message ?? 'Something went wrong. Please try again.', error?.details as ApiError['details'])
+    throw new ApiError(
+      res.status,
+      error?.code ?? 'INTERNAL',
+      error?.message ?? 'Something went wrong. Please try again.',
+      error?.details as ApiError['details'],
+    )
   }
   return json?.data as T
 }
 
 export interface DashboardData {
   events: Array<CelebrationEvent & { progress: { done: number; total: number } }>
-  totals: { upcomingEvents: number; budgetByCurrency: Partial<Record<CurrencyCode, number>>; activeTasks: number; completedTasks: number }
+  totals: {
+    upcomingEvents: number
+    budgetByCurrency: Partial<Record<CurrencyCode, number>>
+    activeTasks: number
+    completedTasks: number
+  }
   activity: Array<{ eventId: string; message: string; at: string }>
 }
 export interface SavedPlan {
@@ -73,7 +89,9 @@ export interface ChatResult {
   missing: string[]
   readyToGenerate: boolean
 }
-export type GenerateResult = { kind: 'clarification'; missing: string[]; questions: string[] } | { kind: 'plan'; reused: boolean; version: number; plan: EventPlan }
+export type GenerateResult =
+  | { kind: 'clarification'; missing: string[]; questions: string[] }
+  | { kind: 'plan'; reused: boolean; version: number; plan: EventPlan }
 export interface Suggestions {
   missing: MissingDetail[]
   decisions: EventPlan['decisions']
@@ -93,17 +111,30 @@ export const api = {
   updateBudget: (id: string, expenses: Array<Pick<Expense, 'category' | 'estimatedMinor' | 'actualMinor'>>) =>
     request<{ expenses: Expense[]; summary: BudgetSummary }>('PATCH', `/events/${id}/budget`, { expenses }),
   tasks: (id: string) => request<Task[]>('GET', `/events/${id}/tasks`),
-  createTasks: (id: string, tasks: Array<Partial<TaskCreate> & Pick<TaskCreate, 'title'>>) => request<Task[]>('POST', `/events/${id}/tasks/bulk`, { tasks }),
+  createTasks: (id: string, tasks: Array<Partial<TaskCreate> & Pick<TaskCreate, 'title'>>) =>
+    request<Task[]>('POST', `/events/${id}/tasks/bulk`, { tasks }),
   suggestions: (id: string) => request<Suggestions>('GET', `/events/${id}/suggestions`),
-  updateSchedule: (id: string, schedule: EventPlan['schedule']) => request<SavedPlan>('PUT', `/events/${id}/plan/schedule`, { schedule }),
-  createTask: (id: string, input: Partial<TaskCreate> & Pick<TaskCreate, 'title'>) => request<Task>('POST', `/events/${id}/tasks`, input),
-  updateTask: (id: string, taskId: string, patch: TaskUpdate) => request<Task>('PATCH', `/events/${id}/tasks/${taskId}`, patch),
+  updateSchedule: (id: string, schedule: EventPlan['schedule']) =>
+    request<SavedPlan>('PUT', `/events/${id}/plan/schedule`, { schedule }),
+  createTask: (id: string, input: Partial<TaskCreate> & Pick<TaskCreate, 'title'>) =>
+    request<Task>('POST', `/events/${id}/tasks`, input),
+  updateTask: (id: string, taskId: string, patch: TaskUpdate) =>
+    request<Task>('PATCH', `/events/${id}/tasks/${taskId}`, patch),
   deleteTask: (id: string, taskId: string) => request<void>('DELETE', `/events/${id}/tasks/${taskId}`),
-  saveInvitation: (id: string, text: string, tone: InvitationTone) => request<CelebrationEvent>('PATCH', `/events/${id}/invitation`, { text, tone }),
-  generateInvitation: (id: string, tone: InvitationTone) => request<{ text: string; tone: InvitationTone }>('POST', `/events/${id}/invitation/generate`, { tone }, AI_TIMEOUT_MS),
+  saveInvitation: (id: string, text: string, tone: InvitationTone) =>
+    request<CelebrationEvent>('PATCH', `/events/${id}/invitation`, { text, tone }),
+  generateInvitation: (id: string, tone: InvitationTone) =>
+    request<{ text: string; tone: InvitationTone }>(
+      'POST',
+      `/events/${id}/invitation/generate`,
+      { tone },
+      AI_TIMEOUT_MS,
+    ),
   conversation: (id: string) => request<ChatMessage[]>('GET', `/events/${id}/conversation`),
-  chat: (message: string, eventId?: string) => request<ChatResult>('POST', '/planner/chat', { message, eventId }, AI_TIMEOUT_MS),
-  generatePlan: (eventId: string, regenerate = false) => request<GenerateResult>('POST', '/planner/generate', { eventId, regenerate }, AI_TIMEOUT_MS),
+  chat: (message: string, eventId?: string) =>
+    request<ChatResult>('POST', '/planner/chat', { message, eventId }, AI_TIMEOUT_MS),
+  generatePlan: (eventId: string, regenerate = false) =>
+    request<GenerateResult>('POST', '/planner/generate', { eventId, regenerate }, AI_TIMEOUT_MS),
   profile: () => request<Profile>('GET', '/profile'),
   updateProfile: (patch: Partial<Omit<Profile, 'id'>>) => request<Profile>('PATCH', '/profile', patch),
   seedDemo: () => request<{ seeded: boolean; eventId: string }>('POST', '/demo/seed', {}),
@@ -115,4 +146,5 @@ export function fieldErrors(err: unknown): Record<string, string> {
   return Object.fromEntries(err.details.map((d) => [d.path, d.message]))
 }
 
-export const errorMessage = (err: unknown) => (err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+export const errorMessage = (err: unknown) =>
+  err instanceof Error ? err.message : 'Something went wrong. Please try again.'

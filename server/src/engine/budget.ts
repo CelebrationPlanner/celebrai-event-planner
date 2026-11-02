@@ -86,7 +86,9 @@ export function allocateBudget(budgetMinor: Minor, flags: Flags): BudgetLine[] {
   const exact = BUDGET_CATEGORIES.map((c) => budget * BigInt(shares[c]))
   const amounts = exact.map((x) => x / 10_000n)
   let leftover = budget - amounts.reduce((a, b) => a + b, 0n)
-  const byRemainder = exact.map((x, i) => [x % 10_000n, i] as const).sort((a, b) => (a[0] === b[0] ? a[1] - b[1] : a[0] > b[0] ? -1 : 1))
+  const byRemainder = exact
+    .map((x, i) => [x % 10_000n, i] as const)
+    .sort((a, b) => (a[0] === b[0] ? a[1] - b[1] : a[0] > b[0] ? -1 : 1))
   for (const [, i] of byRemainder) {
     if (leftover === 0n) break
     amounts[i] += 1n

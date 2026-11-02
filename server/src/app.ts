@@ -25,7 +25,10 @@ function requestLog(enabled: boolean): RequestHandler {
     const id = randomUUID()
     const start = performance.now()
     res.setHeader('x-request-id', id)
-    if (enabled) res.on('finish', () => console.log(`[${id}] ${req.method} ${req.path} ${res.statusCode} ${Math.round(performance.now() - start)}ms`))
+    if (enabled)
+      res.on('finish', () =>
+        console.log(`[${id}] ${req.method} ${req.path} ${res.statusCode} ${Math.round(performance.now() - start)}ms`),
+      )
     next()
   }
 }
@@ -33,8 +36,13 @@ function requestLog(enabled: boolean): RequestHandler {
 /** The configured AI provider, or one that answers "unavailable" when its key is missing. */
 function selectProvider(env: Env): AIProvider {
   const timeoutMs = env.AI_TIMEOUT_MS
-  if (env.AI_PROVIDER === 'claude') return env.ANTHROPIC_API_KEY ? createClaudeProvider({ apiKey: env.ANTHROPIC_API_KEY, model: env.CLAUDE_MODEL, timeoutMs }) : unconfiguredProvider
-  return env.GEMINI_API_KEY ? createGeminiProvider({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL, timeoutMs }) : unconfiguredProvider
+  if (env.AI_PROVIDER === 'claude')
+    return env.ANTHROPIC_API_KEY
+      ? createClaudeProvider({ apiKey: env.ANTHROPIC_API_KEY, model: env.CLAUDE_MODEL, timeoutMs })
+      : unconfiguredProvider
+  return env.GEMINI_API_KEY
+    ? createGeminiProvider({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL, timeoutMs })
+    : unconfiguredProvider
 }
 
 const rateLimited = () => new AppError(429, 'RATE_LIMITED', 'Too many requests. Please wait a moment and try again.')
@@ -44,22 +52,42 @@ export function createApp(env: Env, deps: { ai?: AIProvider } = {}) {
   // AI spend guards, applied after authentication on AI routes only, in this order. Anonymous
   // demo users are free to create, so per-user limits alone are not enough.
   // ponytail: in-memory counters (single instance; reset on restart). Move to a shared store if scaled out.
-  const limiter = (options: Parameters<typeof rateLimit>[0]) => rateLimit({ standardHeaders: 'draft-8', legacyHeaders: false, handler: (_req, _res, next) => next(rateLimited()), ...options })
+  const limiter = (options: Parameters<typeof rateLimit>[0]) =>
+    rateLimit({
+      standardHeaders: 'draft-8',
+      legacyHeaders: false,
+      handler: (_req, _res, next) => next(rateLimited()),
+      ...options,
+    })
   const DAY_MS = 86_400_000
   const aiGuards = [
-    limiter({ windowMs: env.RATE_LIMIT_WINDOW_MS, limit: env.RATE_LIMIT_MAX_REQUESTS, keyGenerator: (req) => req.auth!.userId }),
+    limiter({
+      windowMs: env.RATE_LIMIT_WINDOW_MS,
+      limit: env.RATE_LIMIT_MAX_REQUESTS,
+      keyGenerator: (req) => req.auth!.userId,
+    }),
     limiter({ windowMs: env.RATE_LIMIT_WINDOW_MS, limit: env.AI_RATE_LIMIT_PER_IP }), // per client IP
     limiter({
       windowMs: DAY_MS,
       limit: (req) => (req.auth!.isAnonymous ? env.AI_DAILY_LIMIT_ANONYMOUS : env.AI_DAILY_LIMIT_PER_USER),
       keyGenerator: (req) => req.auth!.userId,
-      handler: (_req, _res, next) => next(new AppError(429, 'RATE_LIMITED', 'You have reached today’s AI planning limit. Please try again tomorrow.')),
+      handler: (_req, _res, next) =>
+        next(
+          new AppError(429, 'RATE_LIMITED', 'You have reached today’s AI planning limit. Please try again tomorrow.'),
+        ),
     }),
     limiter({
       windowMs: DAY_MS,
       limit: env.AI_DAILY_LIMIT_TOTAL,
       keyGenerator: () => 'all-users',
-      handler: (_req, _res, next) => next(new AppError(503, 'AI_UNAVAILABLE', 'The AI planner has reached today’s capacity. Please try again tomorrow.')),
+      handler: (_req, _res, next) =>
+        next(
+          new AppError(
+            503,
+            'AI_UNAVAILABLE',
+            'The AI planner has reached today’s capacity. Please try again tomorrow.',
+          ),
+        ),
     }),
   ]
 
