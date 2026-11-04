@@ -235,7 +235,7 @@ Configure CORS to allow only the production frontend and explicitly required loc
 | D11 | **Money in integer minor units** (`bigint` in Postgres, safe integers in JS). Allowlisted currencies: INR (default), USD, EUR, GBP, all with 2 decimal places. Allocation remainders go to a fixed category, so totals always match. | No floating-point rounding errors; one consistent unit. |
 | D12 | **Render cold starts.** The landing page pings `/api/health` on load and the UI shows a "waking up the planner" state on slow first responses. | Free-tier instances sleep; evaluators shouldn't see a dead app. |
 
-Tooling: Node 22, TypeScript 7 (`strict: true` set explicitly), oxlint, Vitest + Supertest, esbuild for the server build, tsx for server dev. Local Supabase (`supabase start`, Docker) runs the RLS and cross-user tests.
+Tooling: Node 22, TypeScript 7 (`strict: true` set explicitly), oxlint, Prettier, Vitest + Supertest, Playwright, esbuild for the server build, tsx for server dev. Local Supabase (`supabase start`, Docker; CLI pinned as a dev dependency) runs the RLS and cross-user tests. GitHub Actions runs the format check, typecheck, lint, every test suite (integration and end-to-end against a Supabase stack started on the runner) and the build on every push.
 
 ## 12. Event Planning Intelligence Engine (Phase 4)
 

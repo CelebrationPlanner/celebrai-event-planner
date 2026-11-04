@@ -45,7 +45,7 @@ Final audit: 2 Nov 2026 (Phase 9), at commit `abdeb6d` plus this documentation u
 
 - [x] Production build succeeds.
 - [x] Type checking succeeds.
-- [x] Lint succeeds. – 0 errors (6 fast-refresh warnings).
+- [x] Lint succeeds. – 0 errors (6 fast-refresh warnings at submission; 0 warnings since 4 Nov).
 - [x] Unit tests pass. – shared 12, server 67, client 61.
 - [x] API integration tests pass. – 52 against a real local Supabase with two users.
 - [x] Main end-to-end journey passes. – 5 / 5 Playwright journeys.
@@ -54,7 +54,7 @@ Final audit: 2 Nov 2026 (Phase 9), at commit `abdeb6d` plus this documentation u
 - [x] Accessibility checks completed. – axe on 12 screens and in real Chromium (incl. contrast); keyboard-only e2e test.
 - [x] Production deployment manually tested. – [DEPLOYMENT.md §9](DEPLOYMENT.md#9-deployment-record).
 
-Full results: [SECURITY_AND_QA_REPORT.md](SECURITY_AND_QA_REPORT.md).
+Full results: [SECURITY_AND_QA_REPORT.md](SECURITY_AND_QA_REPORT.md). Since 4 Nov every suite above also runs in GitHub Actions on each push; post-submission changes are listed in its §3a.
 
 ## Git checks
 

@@ -60,7 +60,9 @@ API_RATE_LIMIT_MAX_REQUESTS=120
 
 Do not set `SUPABASE_SERVICE_ROLE_KEY` on Render: the API runs every query as the signed-in user (see ARCHITECTURE.md D9).
 
-`render.yaml` fixes `NODE_ENV`, `AI_PROVIDER` and `CLAUDE_MODEL`; the Blueprint form asks for `CLIENT_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `ANTHROPIC_API_KEY` (marked `sync: false`, so they are never in the repository). Render supplies `PORT`. Rate-limit and AI quota variables use the defaults in ENVIRONMENT_VARIABLES.md unless overridden. Never commit these values.
+`render.yaml` fixes `NODE_ENV`, `AI_PROVIDER` and `CLAUDE_MODEL`; the Blueprint form asks for `CLIENT_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `ANTHROPIC_API_KEY` (marked `sync: false`, so they are never in the repository). Render supplies `PORT`. The public demo also runs with a reduced AI budget from `render.yaml` (100 calls/day in total, 20 per account, 3 per demo user); other rate-limit variables use the defaults in ENVIRONMENT_VARIABLES.md. Never commit these values.
+
+**Deploying changes.** A Blueprint created from the public repository URL does not deploy on push. After a change, open the Blueprint and run **Manual sync** (applies `render.yaml` changes and redeploys), or use **Manual Deploy** on the service. Connecting Render to the GitHub organisation (Account settings → GitHub) enables automatic deploys. Netlify deploys the frontend automatically on every push to `main`.
 
 After deployment:
 - Verify `/api/health`.
@@ -146,6 +148,8 @@ GitHub URL:        https://github.com/CelebrationPlanner/celebrai-event-planner
 Supabase project:  hosted, Mumbai region; 3 migrations applied; RLS on all 6 tables
 Deployment commit: c71e79d
 Date verified:     2 Nov 2026
+Updated 4 Nov:     API redeployed at 89179e9 (lower AI caps) by a manual Blueprint sync;
+                   frontend auto-deploys from main (858b9cc at the time of writing)
 ```
 
 Checks from §7, run against the live URLs with a scripted browser and temporary demo (anonymous) accounts:

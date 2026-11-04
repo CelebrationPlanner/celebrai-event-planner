@@ -3,8 +3,8 @@
 Follows the template in [TESTING_PLAN.md §10](TESTING_PLAN.md#10-qa-report-template). Only results that were actually executed are reported.
 
 ```text
-Date:          2 Nov 2026
-Commit:        Phase 7 completion commit (on top of ded65ba)
+Date:          2 Nov 2026 (updated 4 Nov 2026)
+Commit:        c71e79d (Phase 7); post-submission updates through 858b9cc (§3a)
 Frontend URL:  https://celebrai-planner.netlify.app
 Backend URL:   https://celebrai-api-jd3j.onrender.com/api/health
 ```
@@ -14,13 +14,16 @@ Backend URL:   https://celebrai-api-jd3j.onrender.com/api/health
 | Check | Command | Result |
 |---|---|---|
 | Typecheck | `npm run typecheck` | Pass (all workspaces) |
-| Lint | `npm run lint` | Pass – 0 errors; 6 pre-existing `only-export-components` (fast-refresh) warnings |
+| Format | `npm run format:check` | Pass (Prettier) |
+| Lint | `npm run lint` | Pass – 0 errors, 0 warnings |
 | Shared unit tests | `npm test -w shared` | 12 / 12 pass |
 | Server unit tests | `npm test -w server` | 67 / 67 pass |
 | API integration tests (real local Supabase, two users) | `npm run test:integration -w server` | 52 / 52 pass |
 | Client tests (incl. axe on 12 screens) | `npm test -w client` | 61 / 61 pass |
 | Production build | `npm run build` | Pass |
 | End-to-end (Playwright, real browser + API + database) | `npm run test:e2e -w client` | 5 / 5 pass (desktop + mobile) |
+
+All of the above run in GitHub Actions on every push (`.github/workflows/ci.yml`); the integration and end-to-end suites use a Supabase stack started on the runner with its default local keys.
 
 Total automated tests: 192 unit, integration and component tests plus 5 end-to-end journeys. Mapping of every test-plan case to its test: [TESTING_PLAN.md §4a](TESTING_PLAN.md#4a-where-each-case-is-tested).
 
@@ -32,7 +35,7 @@ A focused audit was run with three independent reviewers; each finding was verif
 
 | Finding | Fix |
 |---|---|
-| Anonymous demo users could be minted repeatedly to multiply AI spend | Per-user and per-IP AI rate limits, daily quotas (10 for anonymous, 50 for accounts) and a global daily cap that returns 503 without calling the provider (`server/src/app.ts`, `security.int.test.ts`) |
+| Anonymous demo users could be minted repeatedly to multiply AI spend | Per-user and per-IP AI rate limits, daily quotas (defaults 10 for anonymous, 50 for accounts; the public demo now runs with 3 / 20 and 100 in total, set in `render.yaml`) and a global daily cap that returns 503 without calling the provider (`server/src/app.ts`, `security.int.test.ts`) |
 | Theme/dietary tags written directly through the Supabase Data API bypassed API length limits and could inflate AI prompts | `tags_valid()` CHECK constraints in the database (`20261102000000_security_hardening.sql`) |
 | Login `next` parameter could be shaped into an off-site redirect (`/\evil.com`, tab/newline tricks) | Stricter `safeNext` allow-pattern (`safeNext.test.ts`) |
 | An invalid time zone stored directly in a profile could break date logic | Validated with a fallback to Asia/Kolkata (`security.int.test.ts`) |
@@ -60,6 +63,21 @@ Also hardened: execute permission on trigger functions revoked from client roles
 - **Smaller entry bundle.** The browser only uses Supabase Auth, so it now builds the auth client alone (configured exactly as supabase-js does, same session storage key) instead of the full client with database, storage and realtime code. Entry chunk: **208.7 → 176.7 KB gzipped** (693 → 578 KB raw).
 - **More reliable axe scans in e2e.** Scans now wait for finite animations to settle; scanning during the landing fade-in reported translucent text as low contrast.
 - **Intermittent client test.** One earlier run failed once; 17 later runs (6 under deliberate CPU load) all passed. The historical failures all stopped at the 5 s Testing Library wait limit under heavy load, i.e. slow test timing rather than an application defect. Timeouts were not raised blindly; revisit if it recurs.
+
+## 3a. Changes after submission (4 Nov 2026)
+
+Each change passed the full local suite and both CI jobs before it was recorded here.
+
+| Change | Commit |
+|---|---|
+| Prettier (existing style, 120 columns) applied to all code; no line in our own code over 160 columns; `format` / `format:check` scripts | `dfa01a3` |
+| Lint warnings 6 → 0 (non-component exports moved to `app/session.ts` and `features/auth/safeNext.ts`) | `dfa01a3` |
+| GitHub Actions: static checks, unit tests and build; then integration and e2e against a local Supabase stack on the runner (Supabase CLI pinned at 3.0.0) | `dfa01a3`, `5e85b37`, `69638bb` |
+| Live AI budget lowered for the public demo: 100 calls/day in total, 20 per account, 3 per demo user (`render.yaml`) | `89179e9` |
+| Four largest pages split into smaller components (code moves only) | `398dea1` |
+| Budget chart drawn with CSS instead of Recharts: budget page chunk **110.5 → 4.5 KB gzipped**, 37 packages removed | `858b9cc` |
+
+Found while doing this: the Render Blueprint was created from the public repository URL, so pushes never triggered a deploy; the API ran `64db6c3` until a manual Blueprint sync deployed `89179e9`. Later server changes were formatting only, so nothing user-facing was missed. See DEPLOYMENT.md §4.
 
 ## 4. End-to-end and accessibility
 
@@ -90,6 +108,6 @@ Accessibility: labelled inputs with errors linked by `aria-describedby`, visible
 
 Full record: [DEPLOYMENT.md §9](DEPLOYMENT.md#9-deployment-record).
 
-**Known limitations:** costs are estimates, venue/vendor availability is never claimed, the free Render instance sleeps when idle (first request can take ~50 s), and rate-limit counters are in memory (single instance).
+**Known limitations:** costs are estimates, venue/vendor availability is never claimed, the free Render instance sleeps when idle (first request can take ~50 s), server changes reach Render only through a manual Blueprint sync or deploy, and rate-limit counters are in memory (single instance).
 
 **Release decision:** READY.
