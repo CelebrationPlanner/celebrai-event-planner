@@ -54,7 +54,7 @@ AI_DAILY_LIMIT_TOTAL=1000
 | `AI_DAILY_LIMIT_PER_USER` / `AI_DAILY_LIMIT_ANONYMOUS` | No | AI calls per user per day: accounts (default 50) and anonymous demo users (default 10). Over the limit returns 429. |
 | `AI_DAILY_LIMIT_TOTAL` | No | AI calls per day across all users (default 1000), a hard cap on provider spend. Over the cap returns `503 AI_UNAVAILABLE` without calling the provider. |
 
-The production values (Render) are set by `render.yaml`: `NODE_ENV=production`, `AI_PROVIDER=claude`, `CLAUDE_MODEL=claude-opus-5-5`; `CLIENT_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `ANTHROPIC_API_KEY` are entered in the Render dashboard. The frontend values (Netlify) are entered in Netlify's environment settings. Everything else uses the defaults above.
+The production values (Render) are set by `render.yaml`: `NODE_ENV=production`, `AI_PROVIDER=claude`, `CLAUDE_MODEL=claude-opus-5-5`, and a reduced AI budget for the public demo (`AI_DAILY_LIMIT_TOTAL=100`, `AI_DAILY_LIMIT_PER_USER=20`, `AI_DAILY_LIMIT_ANONYMOUS=3`); `CLIENT_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `ANTHROPIC_API_KEY` are entered in the Render dashboard. The frontend values (Netlify) are entered in Netlify's environment settings. Everything else uses the defaults above.
 
 **The running API does not use `SUPABASE_SERVICE_ROLE_KEY`.** It is only needed by the integration tests, which read it from `npx supabase status` at runtime (`npm run test:integration -w server`). Never set it on Render.
 

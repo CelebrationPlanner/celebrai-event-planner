@@ -18,6 +18,13 @@ services:
         value: claude
       - key: CLAUDE_MODEL
         value: claude-opus-5-5
+      # Public demo after judging: a small daily AI budget (each call is billed).
+      - key: AI_DAILY_LIMIT_TOTAL
+        value: "100"
+      - key: AI_DAILY_LIMIT_PER_USER
+        value: "20"
+      - key: AI_DAILY_LIMIT_ANONYMOUS
+        value: "3"
       - key: CLIENT_URL
         sync: false
       - key: SUPABASE_URL
