@@ -44,6 +44,7 @@ describe('authentication gate (AUTH-03 / AUTH-04)', () => {
     ['no header', undefined],
     ['wrong scheme', 'Basic abc'],
     ['malformed token', 'Bearer not-a-jwt'],
+    ['JWT-shaped token that does not decode', 'Bearer abc.def.ghi'],
   ])('rejects %s with 401 and the standard error shape', async (_label, header) => {
     const req = request(app).get('/api/events')
     const res = await (header ? req.set('Authorization', header) : req)

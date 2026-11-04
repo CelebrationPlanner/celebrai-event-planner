@@ -15,6 +15,17 @@ declare module 'express-serve-static-core' {
 const noSession = { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
 const unauthenticated = () => new AppError(401, 'UNAUTHENTICATED', 'Sign in to continue.')
 
+// getClaims throws (instead of returning an error) when a JWT part is not base64url JSON, which
+// would surface as a 500. Malformed tokens are bad input; Supabase outages must still be errors.
+const isJsonObject = (part: string) => {
+  try {
+    const value: unknown = JSON.parse(Buffer.from(part, 'base64url').toString('utf8'))
+    return typeof value === 'object' && value !== null
+  } catch {
+    return false
+  }
+}
+
 /**
  * Verifies the Supabase access token and attaches the caller's id plus a database client that
  * acts *as that user*, so Row Level Security applies to every query (D9). The user id always
@@ -27,6 +38,8 @@ export function requireAuth(env: Env): RequestHandler {
     const match = /^Bearer ([\w-]+\.[\w-]+\.[\w-]+)$/.exec(req.get('authorization') ?? '')
     if (!match) throw unauthenticated()
     const token = match[1]
+    const [header, payload] = token.split('.')
+    if (!isJsonObject(header) || !isJsonObject(payload)) throw unauthenticated()
 
     const { data, error } = await verifier.auth.getClaims(token)
     if (error || !data?.claims.sub || data.claims.role !== 'authenticated') throw unauthenticated()
