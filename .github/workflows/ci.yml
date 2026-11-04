@@ -1,5 +1,5 @@
-# Runs on every push and pull request to main. Integration and end-to-end tests need a local
-# Supabase stack (Docker) and run locally: `npm run test:integration -w server`, `npm run test:e2e -w client`.
+# Runs on every push and pull request to main: static checks and unit tests, plus the integration
+# and end-to-end suites against a local Supabase stack (Docker) started on the runner.
 name: CI
 
 on:
@@ -28,3 +28,28 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+  integration-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Auth, API gateway, PostgREST and mail are all the app needs; skip the rest to start faster.
+      - run: npx supabase start -x realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      # Point the app at the runner's local stack (its default local keys, not real credentials).
+      - run: |
+          npx supabase status -o json | node -e "
+            const fs = require('fs')
+            const s = JSON.parse(fs.readFileSync(0, 'utf8'))
+            const key = s.ANON_KEY ?? s.PUBLISHABLE_KEY
+            fs.writeFileSync('server/.env', 'SUPABASE_URL=' + s.API_URL + '\nSUPABASE_ANON_KEY=' + key + '\nCLIENT_URL=http://localhost:5175\n')
+            fs.writeFileSync('client/.env', 'VITE_SUPABASE_URL=' + s.API_URL + '\nVITE_SUPABASE_ANON_KEY=' + key + '\n')
+          "
+      - run: npm run test:integration -w server
+      - run: npx playwright install --with-deps chromium
+        working-directory: client
+      - run: npm run test:e2e -w client

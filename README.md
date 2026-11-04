@@ -139,7 +139,7 @@ npm run dev:server
 npm run dev:client
 ```
 
-Checks: `npm run format:check`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` (all run in GitHub Actions on every push; `npm run format` applies the Prettier style).
+Checks: `npm run format:check`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` (all run in GitHub Actions on every push, together with the integration and end-to-end suites against a local Supabase stack; `npm run format` applies the Prettier style).
 
 ## Documentation
 
