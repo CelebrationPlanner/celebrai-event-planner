@@ -1,107 +1,21 @@
 import { useMutation } from '@tanstack/react-query'
 import { Lightbulb, PiggyBank, Receipt, Scale, TriangleAlert, Wallet } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { EmptyState } from '@/components/EmptyState'
-import { Field } from '@/components/Field'
 import { ErrorState, LoadingBlock } from '@/components/QueryStates'
 import { StatCard } from '@/components/StatCard'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { api, errorMessage } from '@/lib/api'
-import { formatMoney, parseMoney, toMajorInput } from '@/lib/money'
+import { formatMoney } from '@/lib/money'
 import { useBudget, useRefreshEvent } from '@/lib/queries'
-import { BUDGET_CATEGORIES, categoryLabel, type CurrencyCode, type Expense } from '@/types'
+import { BUDGET_CATEGORIES, categoryLabel, type Expense } from '@/types'
 import { useEvent } from '../events/useEvent'
+import { BudgetChart } from './BudgetChart'
+import { EditExpenseDialog } from './EditExpenseDialog'
 import { SuggestedSplitDialog } from './SuggestedSplitDialog'
-
-function EditExpenseDialog({
-  eventId,
-  expense,
-  currency,
-  onClose,
-}: {
-  eventId: string
-  expense: Expense
-  currency: CurrencyCode
-  onClose: () => void
-}) {
-  const refresh = useRefreshEvent()
-  const [estimated, setEstimated] = useState(toMajorInput(expense.estimatedMinor))
-  const [actual, setActual] = useState(expense.actualMinor === null ? '' : toMajorInput(expense.actualMinor))
-  const [errors, setErrors] = useState<{ estimated?: string; actual?: string }>({})
-  const save = useMutation({
-    mutationFn: (line: Pick<Expense, 'category' | 'estimatedMinor' | 'actualMinor'>) =>
-      api.updateBudget(eventId, [line]),
-    onSuccess: async () => {
-      await refresh(eventId)
-      toast.success(`${categoryLabel(expense.category)} updated`)
-      onClose()
-    },
-    onError: (err) => toast.error(errorMessage(err)),
-  })
-
-  function submit(e: FormEvent) {
-    e.preventDefault()
-    const estimatedMinor = parseMoney(estimated)
-    const actualMinor = actual.trim() === '' ? null : parseMoney(actual)
-    const next = {
-      estimated: estimatedMinor === null ? 'Enter a non-negative amount (up to 2 decimals).' : undefined,
-      actual: actual.trim() !== '' && actualMinor === null ? 'Enter a non-negative amount, or leave blank.' : undefined,
-    }
-    setErrors(next)
-    if (!next.estimated && !next.actual)
-      save.mutate({ category: expense.category, estimatedMinor: estimatedMinor!, actualMinor })
-  }
-
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <form onSubmit={submit} noValidate>
-          <DialogHeader>
-            <DialogTitle>Edit {categoryLabel(expense.category)}</DialogTitle>
-            <DialogDescription>Amounts in {currency}. Leave “Actual spent” blank until you’ve paid.</DialogDescription>
-          </DialogHeader>
-          <div className="my-5 grid gap-4 sm:grid-cols-2">
-            <Field label="Estimated" error={errors.estimated}>
-              {(p) => (
-                <Input
-                  {...p}
-                  inputMode="decimal"
-                  value={estimated}
-                  onChange={(e) => setEstimated(e.target.value)}
-                  autoFocus
-                />
-              )}
-            </Field>
-            <Field label="Actual spent" error={errors.actual}>
-              {(p) => <Input {...p} inputMode="decimal" value={actual} onChange={(e) => setActual(e.target.value)} />}
-            </Field>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={save.isPending}>
-              {save.isPending ? 'Saving…' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 export default function BudgetPage() {
   const event = useEvent()
@@ -157,11 +71,6 @@ export default function BudgetPage() {
   const largest = [...expenses]
     .filter((x) => x.category !== 'contingency')
     .sort((a, b) => b.estimatedMinor - a.estimatedMinor)
-  const chartData = expenses.map((x) => ({
-    label: categoryLabel(x.category),
-    Estimated: x.estimatedMinor / 100,
-    Actual: (x.actualMinor ?? 0) / 100,
-  }))
   const ideas = summary.overrunMinor
     ? largest
         .slice(0, 2)
@@ -213,35 +122,13 @@ export default function BudgetPage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-        <Card className="gap-3 p-5">
-          <h2 className="font-semibold">Estimated vs actual</h2>
-          <figure>
-            <div className="h-80" aria-hidden="true">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 8 }}>
-                  <CartesianGrid horizontal={false} stroke="var(--border)" />
-                  <XAxis type="number" tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
-                  <YAxis
-                    type="category"
-                    dataKey="label"
-                    width={110}
-                    tick={{ fontSize: 12 }}
-                    stroke="var(--muted-foreground)"
-                  />
-                  <Tooltip formatter={(v) => money(Math.round(Number(v) * 100))} cursor={{ fill: 'var(--muted)' }} />
-                  <Legend />
-                  <Bar dataKey="Estimated" fill="var(--chart-1)" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="Actual" fill="var(--chart-2)" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <figcaption className="mt-2 text-sm text-muted-foreground">
-              {largest[0] &&
-                `Largest allocation: ${categoryLabel(largest[0].category)} at ${money(largest[0].estimatedMinor)}. `}
-              {money(summary.actualMinor)} spent so far of {money(summary.estimatedMinor)} estimated.
-            </figcaption>
-          </figure>
-        </Card>
+        <BudgetChart
+          expenses={expenses}
+          largest={largest[0]}
+          actualMinor={summary.actualMinor}
+          estimatedMinor={summary.estimatedMinor}
+          money={money}
+        />
 
         <Card className="gap-3 p-5">
           <h2 className="flex items-center gap-2 font-semibold">

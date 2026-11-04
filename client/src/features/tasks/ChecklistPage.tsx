@@ -2,53 +2,22 @@ import { CalendarDays, ListChecks, Pencil, Plus, Trash2, WandSparkles } from 'lu
 import { useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import { EmptyState } from '@/components/EmptyState'
-import { Field, selectClass } from '@/components/Field'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { ErrorState, LoadingBlock } from '@/components/QueryStates'
-import { api, errorMessage } from '@/lib/api'
 import { formatDate, todayISO } from '@/lib/dates'
 import { sortTasks, taskProgress } from '@/lib/insights'
-import { useRefreshEvent, useTasks } from '@/lib/queries'
+import { useTasks } from '@/lib/queries'
 import type { Priority, Task } from '@/types'
 import { useEvent } from '../events/useEvent'
+import { EditTaskDialog } from './EditTaskDialog'
 import { SuggestTasksDialog } from './SuggestTasksDialog'
-import { PRIORITIES, validateTask } from './taskForm'
-
-/** Every change is persisted through the API, then the event's queries refresh. */
-function useTaskActions(eventId: string) {
-  const refresh = useRefreshEvent()
-  const run = async <T,>(work: Promise<T>, success?: string) => {
-    try {
-      const result = await work
-      await refresh(eventId)
-      if (success) toast.success(success)
-      return result
-    } catch (err) {
-      toast.error(errorMessage(err))
-      throw err
-    }
-  }
-  return {
-    add: (input: Pick<Task, 'title' | 'priority' | 'dueDate' | 'kind'>, success?: string) =>
-      run(api.createTask(eventId, input), success),
-    update: (taskId: string, patch: Parameters<typeof api.updateTask>[2], success?: string) =>
-      run(api.updateTask(eventId, taskId, patch), success),
-    remove: (taskId: string) => run(api.deleteTask(eventId, taskId)),
-  }
-}
+import { TaskFields } from './TaskFields'
+import { validateTask } from './taskForm'
+import { useTaskActions } from './useTaskActions'
 
 const FILTERS = ['all', 'active', 'completed'] as const
 type Filter = (typeof FILTERS)[number]
@@ -57,119 +26,6 @@ const priorityClass: Record<Priority, string> = {
   high: 'border-coral text-accent-foreground',
   medium: 'border-gold text-gold-foreground',
   low: 'text-muted-foreground',
-}
-
-function TaskFields({
-  title,
-  priority,
-  dueDate,
-  error,
-  eventDate,
-  onChange,
-}: {
-  title: string
-  priority: Priority
-  dueDate: string
-  error?: string
-  eventDate: string | null
-  onChange: (patch: Partial<{ title: string; priority: Priority; dueDate: string }>) => void
-}) {
-  return (
-    <>
-      <Field label="Task" error={error}>
-        {(p) => (
-          <Input
-            {...p}
-            value={title}
-            onChange={(e) => onChange({ title: e.target.value })}
-            placeholder="e.g. Confirm the photographer"
-          />
-        )}
-      </Field>
-      <Field label="Priority">
-        {(p) => (
-          <select
-            {...p}
-            className={selectClass}
-            value={priority}
-            onChange={(e) => onChange({ priority: e.target.value as Priority })}
-          >
-            {PRIORITIES.map((pr) => (
-              <option key={pr} value={pr} className="capitalize">
-                {pr}
-              </option>
-            ))}
-          </select>
-        )}
-      </Field>
-      <Field label="Due date">
-        {(p) => (
-          <Input
-            {...p}
-            type="date"
-            min={todayISO()}
-            max={eventDate ?? undefined}
-            value={dueDate}
-            onChange={(e) => onChange({ dueDate: e.target.value })}
-          />
-        )}
-      </Field>
-    </>
-  )
-}
-
-function EditTaskDialog({ task, eventDate, onClose }: { task: Task; eventDate: string | null; onClose: () => void }) {
-  const actions = useTaskActions(task.eventId)
-  const [saving, setSaving] = useState(false)
-  const [values, setValues] = useState({ title: task.title, priority: task.priority, dueDate: task.dueDate ?? '' })
-  const [error, setError] = useState<string>()
-
-  async function save(e: FormEvent) {
-    e.preventDefault()
-    // Unchanged past due dates on existing tasks stay valid; only new dates are checked.
-    const problem = validateTask(
-      values.title,
-      values.dueDate === task.dueDate ? '' : values.dueDate,
-      todayISO(),
-      eventDate,
-    )
-    if (problem) return setError(problem)
-    setSaving(true)
-    await actions
-      .update(
-        task.id,
-        { title: values.title.trim(), priority: values.priority, dueDate: values.dueDate || null },
-        'Task updated',
-      )
-      .then(onClose, () => setSaving(false))
-  }
-
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <form onSubmit={save} noValidate className="flex flex-col gap-4">
-          <DialogHeader>
-            <DialogTitle>Edit task</DialogTitle>
-            <DialogDescription>Changes are saved to this event’s checklist.</DialogDescription>
-          </DialogHeader>
-          <TaskFields
-            {...values}
-            error={error}
-            eventDate={eventDate}
-            onChange={(patch) => setValues((v) => ({ ...v, ...patch }))}
-          />
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Saving…' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
 }
 
 export default function ChecklistPage() {
