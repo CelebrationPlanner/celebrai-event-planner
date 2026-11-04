@@ -4,7 +4,7 @@ import { afterEach, vi } from 'vitest'
 
 afterEach(cleanup)
 
-// jsdom lacks these browser APIs used by Recharts, Motion and Radix.
+// jsdom lacks these browser APIs used by Motion and Radix.
 globalThis.ResizeObserver ??= class {
   observe() {}
   unobserve() {}
