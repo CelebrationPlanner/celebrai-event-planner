@@ -26,3 +26,7 @@ Author: Ashutosh Gaikwad (https://github.com/gaikwadashutosh35)
 
 ## Pages
 - [Home](https://celebrai-planner.netlify.app/): what CelebrAI does, example occasions, how it decides, and the demo.
+- [Birthday party budget planner and checklist](https://celebrai-planner.netlify.app/birthday-party-planner): a worked ₹25,000 kids' party for 40 guests, with the budget split, dated checklist and risks.
+- [Wedding budget planner and checklist](https://celebrai-planner.netlify.app/wedding-budget-planner): a worked ₹5,00,000 wedding for 200 guests with vegetarian and Jain catering.
+- [Baby shower planner](https://celebrai-planner.netlify.app/baby-shower-planner): a worked ₹10,000 baby shower for 30 guests on a tight budget, with a host checklist.
+- [Anniversary party planner](https://celebrai-planner.netlify.app/anniversary-party-planner): a worked ₹15,000 outdoor 25th anniversary dinner for 20 guests, with a weather backup.

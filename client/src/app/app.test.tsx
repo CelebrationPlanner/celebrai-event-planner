@@ -23,6 +23,31 @@ describe('Landing', () => {
   })
 })
 
+describe('Occasion guides', () => {
+  it('shows a worked example whose budget adds up, with a pre-selected plan link', async () => {
+    renderApp('/wedding-budget-planner', { signedIn: false })
+    expect(screen.getByRole('heading', { level: 1, name: 'Wedding Budget Planner and Checklist' })).toBeInTheDocument()
+    expect(document.title).toBe('Wedding Budget Planner and Checklist for India | CelebrAI')
+    const table = screen.getByRole('table', { name: /budget split/i })
+    expect(within(table).getAllByRole('row')).toHaveLength(10) // header, 8 categories, total
+    expect(within(table).getByRole('row', { name: /total/i })).toHaveTextContent('₹5,00,000')
+    expect(screen.getByText(/Large guest count:/)).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Plan your wedding' })[0]).toHaveAttribute(
+      'href',
+      '/events/new?occasion=wedding',
+    )
+  })
+
+  it('is linked from the landing page and links to the other guides', async () => {
+    const { user, router } = renderApp('/', { signedIn: false })
+    const guides = screen.getByRole('navigation', { name: 'Planning guides' })
+    await user.click(within(guides).getByRole('link', { name: 'Baby Shower Planner: Budget and Host Checklist' }))
+    expect(router.state.location.pathname).toBe('/baby-shower-planner')
+    const more = screen.getByRole('navigation', { name: 'More planning guides' })
+    expect(within(more).getAllByRole('link')).toHaveLength(4) // home and the other three guides
+  })
+})
+
 describe('Authentication and protected routes', () => {
   it('sends signed-out visitors to login and back to where they were going', async () => {
     const { user, router } = renderApp('/events/evt-birthday/budget', { signedIn: false })

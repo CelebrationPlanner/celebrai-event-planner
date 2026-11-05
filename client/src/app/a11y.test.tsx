@@ -7,6 +7,10 @@ import { renderApp } from '@/test/renderApp'
 // AA-verified in index.css) and again with Playwright + axe in the browser phase.
 const PAGES: Array<[string, RegExp]> = [
   ['/', /every celebration starts with a plan/i],
+  ['/birthday-party-planner', /birthday party budget planner/i],
+  ['/wedding-budget-planner', /wedding budget planner/i],
+  ['/baby-shower-planner', /baby shower planner/i],
+  ['/anniversary-party-planner', /anniversary party planner/i],
   ['/signup', /create your account/i],
   ['/login', /welcome back/i],
   ['/dashboard', /hello, priya/i],

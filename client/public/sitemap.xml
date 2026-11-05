@@ -9,4 +9,20 @@
       <image:title>CelebrAI landing page with an example birthday plan, budget split and checklist</image:title>
     </image:image>
   </url>
+  <url>
+    <loc>https://celebrai-planner.netlify.app/birthday-party-planner</loc>
+    <lastmod>2026-11-05</lastmod>
+  </url>
+  <url>
+    <loc>https://celebrai-planner.netlify.app/wedding-budget-planner</loc>
+    <lastmod>2026-11-05</lastmod>
+  </url>
+  <url>
+    <loc>https://celebrai-planner.netlify.app/baby-shower-planner</loc>
+    <lastmod>2026-11-05</lastmod>
+  </url>
+  <url>
+    <loc>https://celebrai-planner.netlify.app/anniversary-party-planner</loc>
+    <lastmod>2026-11-05</lastmod>
+  </url>
 </urlset>

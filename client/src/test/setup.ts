@@ -26,6 +26,8 @@ Element.prototype.scrollTo ??= function () {}
 Element.prototype.setPointerCapture ??= function () {}
 Element.prototype.releasePointerCapture ??= function () {}
 Element.prototype.hasPointerCapture ??= () => false
+// jsdom's window.scrollTo only logs "not implemented".
+window.scrollTo = () => {}
 
 // Lazy routes import their chunk on first render; give findBy* queries room for that.
 configure({ asyncUtilTimeout: 5000 })

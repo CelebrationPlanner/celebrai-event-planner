@@ -1,32 +1,12 @@
 import { ArrowRight, Check } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { toast } from 'sonner'
-import { startDemo } from '@/app/session'
+import { Link } from 'react-router'
 import { Logo } from '@/components/Logo'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { errorMessage } from '@/lib/api'
+import { OCCASION_PAGES } from '@/features/occasions/pages'
 import { DECISIONS, EXAMPLES, FEATURES, STEPS } from './content'
 import { PlanPreview } from './PlanPreview'
-
-/** Starts an isolated demo account with a sample event, then opens the dashboard. */
-function useDemo() {
-  const navigate = useNavigate()
-  const [pending, setPending] = useState(false)
-  async function run() {
-    setPending(true)
-    try {
-      await startDemo()
-      navigate('/dashboard')
-    } catch (err) {
-      toast.error(errorMessage(err))
-    } finally {
-      setPending(false)
-    }
-  }
-  return { run, pending }
-}
+import { useDemo } from './useDemo'
 
 export default function LandingPage() {
   const demo = useDemo()
@@ -130,6 +110,18 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
+            <nav aria-label="Planning guides" className="mt-8 text-sm text-muted-foreground">
+              <h3 className="font-semibold text-foreground">Planning guides with worked budgets</h3>
+              <ul className="mt-2 flex flex-wrap gap-x-6 gap-y-2">
+                {OCCASION_PAGES.map((p) => (
+                  <li key={p.slug}>
+                    <Link to={`/${p.slug}`} className="text-primary underline-offset-4 hover:underline">
+                      {p.h1}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </div>
         </section>
 

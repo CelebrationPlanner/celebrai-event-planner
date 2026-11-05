@@ -2,8 +2,10 @@ import type { ComponentType } from 'react'
 import type { RouteObject } from 'react-router'
 import { RouteError, RouteFallback } from '@/components/RouteStates'
 import LandingPage from '@/features/landing/LandingPage'
+import OccasionPage from '@/features/occasions/OccasionPage'
+import { OCCASION_PAGES } from '@/features/occasions/pages'
 
-// Every screen except the landing page is code-split and loaded on first visit.
+// Every screen except the pre-rendered public pages is code-split and loaded on first visit.
 const page = (load: () => Promise<{ default: ComponentType }>) => async () => ({ Component: (await load()).default })
 
 export const routes: RouteObject[] = [
@@ -12,6 +14,7 @@ export const routes: RouteObject[] = [
     hydrateFallbackElement: <RouteFallback />,
     children: [
       { path: '/', Component: LandingPage },
+      ...OCCASION_PAGES.map((p) => ({ path: `/${p.slug}`, element: <OccasionPage page={p} /> })),
       { path: '/login', lazy: page(() => import('@/features/auth/LoginPage')) },
       { path: '/signup', lazy: page(() => import('@/features/auth/SignupPage')) },
       {
