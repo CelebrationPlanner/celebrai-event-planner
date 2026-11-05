@@ -7,36 +7,37 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# Client-side routing: only the app's routes load the app (static files such as robots.txt are
-# served first). Any other path gets 404.html with a real 404 status, not a copy of the home page.
+# Client-side routing: only the app's routes load the app shell (app.html; index.html holds the
+# pre-rendered landing page). Static files such as robots.txt are served first. Any other path gets
+# 404.html with a real 404 status, not a copy of the home page.
 [[redirects]]
   from = "/login"
-  to = "/index.html"
+  to = "/app.html"
   status = 200
 
 [[redirects]]
   from = "/signup"
-  to = "/index.html"
+  to = "/app.html"
   status = 200
 
 [[redirects]]
   from = "/dashboard"
-  to = "/index.html"
+  to = "/app.html"
   status = 200
 
 [[redirects]]
   from = "/planner"
-  to = "/index.html"
+  to = "/app.html"
   status = 200
 
 [[redirects]]
   from = "/settings"
-  to = "/index.html"
+  to = "/app.html"
   status = 200
 
 [[redirects]]
   from = "/events/*"
-  to = "/index.html"
+  to = "/app.html"
   status = 200
 
 [[redirects]]
@@ -72,6 +73,17 @@
 
 [[headers]]
   for = "/events/*"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+# The bare app shell is also reachable by its own name.
+[[headers]]
+  for = "/app.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/app"
   [headers.values]
     X-Robots-Tag = "noindex"
 

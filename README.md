@@ -71,7 +71,7 @@ Express API (TypeScript, Render) ──► AI provider (Claude or Gemini, server
 Supabase Postgres + Auth (Row Level Security on every table)
 ```
 
-- `client/` – React 19, Tailwind v4, shadcn/ui, TanStack Query, Motion (the budget chart is plain CSS).
+- `client/` – React 19, Tailwind v4, shadcn/ui, TanStack Query (the budget chart is plain CSS). The landing page is pre-rendered to static HTML at build time (`src/prerender.tsx`, `scripts/prerender.mjs`) so crawlers that don't run JavaScript see its content.
 - `server/` – Express 5, Zod, engine, AI providers, REST modules.
 - `shared/` – Zod schemas, money/date helpers and budget maths shared by client and server.
 - `supabase/migrations/` – schema, constraints, indexes, RLS, transactional plan save.
