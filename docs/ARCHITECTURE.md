@@ -211,7 +211,7 @@ Treat user content and retrieved text as untrusted data. Never allow it to overr
 
 ## 10. Deployment topology
 
-- Netlify: static frontend (`netlify.toml`). The API is not run as Netlify Functions because full plan generation (~35-40 s) exceeds synchronous function limits.
+- Cloudflare Pages: static frontend (`client/public/_redirects`, `client/public/_headers`; moved from Netlify on 5 Nov 2026, whose `netlify.toml` is kept). The API is not run as serverless functions because full plan generation (~35-40 s) exceeds synchronous function limits.
 - Render: Express API (`render.yaml`).
 - Supabase: hosted PostgreSQL and authentication.
 - AI provider: server-to-server API calls.

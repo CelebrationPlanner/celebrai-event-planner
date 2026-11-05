@@ -1,10 +1,10 @@
 // Runs after `vite build` and the SSR build of src/prerender.tsx. Writes each public page's HTML
 // into a copy of the built shell (index.html for /, <slug>.html for the occasion guides) and keeps
-// the empty shell as dist/app.html for the app's routes (netlify.toml), so app screens never show
+// the empty shell as dist/app.html for the app's routes (_redirects), so app screens never show
 // a public page before React loads.
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 
-const SITE = 'https://celebrai-planner.netlify.app'
+const SITE = 'https://celebrai-planner.pages.dev'
 const { render } = await import('../dist-ssr/prerender.js')
 const shell = readFileSync('dist/index.html', 'utf8')
 const root = '<div id="root"></div>'

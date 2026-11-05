@@ -1,0 +1,24 @@
+# Cloudflare Pages. App screens are private or thin: keep them out of search results.
+/login
+  X-Robots-Tag: noindex
+/signup
+  X-Robots-Tag: noindex
+/dashboard
+  X-Robots-Tag: noindex
+/planner
+  X-Robots-Tag: noindex
+/settings
+  X-Robots-Tag: noindex
+/events/*
+  X-Robots-Tag: noindex
+/app.html
+  X-Robots-Tag: noindex
+/app
+  X-Robots-Tag: noindex
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.onrender.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()

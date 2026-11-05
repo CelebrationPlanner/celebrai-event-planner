@@ -4,7 +4,7 @@
 
 | Service | Responsibility |
 |---|---|
-| Netlify | React frontend (static build, `netlify.toml`) |
+| Cloudflare Pages | React frontend (static build, `client/public/_redirects` and `_headers`) |
 | Render | Express API (`render.yaml` blueprint) |
 | Supabase | PostgreSQL and authentication |
 | AI provider | Server-side model API |
@@ -43,7 +43,7 @@ Backend environment variables:
 ```env
 NODE_ENV=production
 PORT=10000
-CLIENT_URL=https://YOUR-SITE.netlify.app
+CLIENT_URL=https://YOUR-SITE.pages.dev
 
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
@@ -71,17 +71,17 @@ After deployment:
 - Verify CORS allows only intended origins.
 - Verify rate limits and safe error responses.
 
-## 5. Netlify frontend setup
+## 5. Cloudflare Pages frontend setup
 
-Import the repository into Netlify (Add new project → Import from GitHub). `netlify.toml` at the repository root supplies everything else:
-- Build command: `npm run build -w client` (Node 22)
-- Publish directory: `client/dist`
-- SPA rewrite: every path serves `index.html`
-- Security headers: strict Content-Security-Policy (API and Supabase origins only in `connect-src`), `X-Frame-Options: DENY`, `nosniff`, referrer and permissions policies
+In Cloudflare, go to Workers & Pages → Create → Pages → Connect to Git and pick the repository:
+- Build command: `npm run build -w client`; environment variable `NODE_VERSION=22`
+- Build output directory: `client/dist`; root directory empty
+- `client/public/_redirects`: the app's routes (`/login`, `/signup`, `/dashboard`, `/planner`, `/settings`, `/events/*`) serve the app shell (`app.html`, served as `/app`); other unknown paths get `404.html` with a 404 status
+- `client/public/_headers`: strict Content-Security-Policy (API and Supabase origins only in `connect-src`), `X-Frame-Options: DENY`, `nosniff`, referrer and permissions policies, and `X-Robots-Tag: noindex` on app screens
 
-The API is not deployed as Netlify Functions: full AI plan generation takes ~35-40 s, longer than synchronous serverless function limits. New Netlify projects may start **private**; use **Make public** so judges and users can open the site.
+The API is not deployed as serverless functions: full AI plan generation takes ~35-40 s, longer than synchronous function limits. `netlify.toml` holds the same rules for the earlier Netlify site.
 
-Frontend environment variables (Netlify → Project configuration → Environment variables):
+Frontend environment variables (Cloudflare Pages → Settings → Variables and Secrets):
 
 ```env
 VITE_API_BASE_URL=https://YOUR-BACKEND.onrender.com/api
@@ -91,7 +91,7 @@ VITE_SUPABASE_ANON_KEY=
 
 Only public browser-safe Supabase values belong in frontend variables. Never use a `VITE_` prefix for secrets.
 
-In Supabase → Authentication → URL Configuration, set the **Site URL** to the Netlify URL and add `https://YOUR-SITE.netlify.app/**` to the redirect URLs. Keep **anonymous sign-ins** enabled for the demo.
+In Supabase → Authentication → URL Configuration, set the **Site URL** to the Pages URL and add `https://YOUR-SITE.pages.dev/**` to the redirect URLs. Keep **anonymous sign-ins** enabled for the demo.
 
 ## 6. CORS and URLs
 
@@ -142,7 +142,7 @@ Check the hosting plan's current behavior. Display a loading state and use sensi
 ## 9. Deployment record
 
 ```text
-Frontend URL:      https://celebrai-planner.netlify.app
+Frontend URL:      https://celebrai-planner.pages.dev
 Backend URL:       https://celebrai-api-jd3j.onrender.com/api (health: /api/health)
 GitHub URL:        https://github.com/CelebrationPlanner/celebrai-event-planner
 Supabase project:  hosted, Mumbai region; 3 migrations applied; RLS on all 6 tables

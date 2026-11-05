@@ -1,0 +1,8 @@
+# Cloudflare Pages. Only the app's routes load the app shell (app.html; index.html holds the
+# pre-rendered landing page). Unknown paths get 404.html with a 404 status automatically.
+/login /app 200
+/signup /app 200
+/dashboard /app 200
+/planner /app 200
+/settings /app 200
+/events/* /app 200

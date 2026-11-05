@@ -4,7 +4,7 @@
 
 CelebrAI turns a sentence like *"My daughter's 5th birthday in Pune for 40 guests, ₹25,000, she loves princesses, in 12 days"* into a complete, editable plan: theme, budget split, prioritised checklist, timeline, event-day schedule, risks and an invitation — and explains **why** it recommends each thing.
 
-- **Live app:** https://celebrai-planner.netlify.app
+- **Live app:** https://celebrai-planner.pages.dev
 - **API health:** https://celebrai-api-jd3j.onrender.com/api/health (free tier: the first request after idle can take ~50 s)
 - **Repository:** https://github.com/CelebrationPlanner/celebrai-event-planner
 - **Try it without an account:** press **Explore the demo** on the landing page (an isolated, temporary account with a sample event).
@@ -87,7 +87,7 @@ Provider-neutral AI: business logic depends only on an `AIProvider` interface; `
 - **Validation everywhere:** strict Zod schemas (unknown fields such as `userId` rejected), database CHECK constraints mirroring API limits, 100 KB body limit, 2,000-char messages, bounded conversation history.
 - **AI safety:** system rules separate from user text; user text JSON-encoded inside one untrusted block; model output schema-validated; no tools or code execution; costs/dates never from the model.
 - **AI spend guards:** per-user and per-IP AI rate limits, daily quotas (lower for anonymous demo users) and a global daily cap that answers 503 without calling the provider.
-- **Transport:** helmet headers on the API, strict CSP on the frontend (`netlify.toml`), single-origin CORS, generic error messages, logs without bodies or tokens, open-redirect guard on login.
+- **Transport:** helmet headers on the API, strict CSP on the frontend (`client/public/_headers`), single-origin CORS, generic error messages, logs without bodies or tokens, open-redirect guard on login.
 - A focused security audit with three independent reviewers was run; its findings were fixed and tested. Findings, fixes and accepted residual risks: [docs/SECURITY_AND_QA_REPORT.md](docs/SECURITY_AND_QA_REPORT.md).
 
 ---

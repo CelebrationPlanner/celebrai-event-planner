@@ -2,27 +2,27 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
-    <loc>https://celebrai-planner.netlify.app/</loc>
+    <loc>https://celebrai-planner.pages.dev/</loc>
     <lastmod>2026-11-05</lastmod>
     <image:image>
-      <image:loc>https://celebrai-planner.netlify.app/og.jpg</image:loc>
+      <image:loc>https://celebrai-planner.pages.dev/og.jpg</image:loc>
       <image:title>CelebrAI landing page with an example birthday plan, budget split and checklist</image:title>
     </image:image>
   </url>
   <url>
-    <loc>https://celebrai-planner.netlify.app/birthday-party-planner</loc>
+    <loc>https://celebrai-planner.pages.dev/birthday-party-planner</loc>
     <lastmod>2026-11-05</lastmod>
   </url>
   <url>
-    <loc>https://celebrai-planner.netlify.app/wedding-budget-planner</loc>
+    <loc>https://celebrai-planner.pages.dev/wedding-budget-planner</loc>
     <lastmod>2026-11-05</lastmod>
   </url>
   <url>
-    <loc>https://celebrai-planner.netlify.app/baby-shower-planner</loc>
+    <loc>https://celebrai-planner.pages.dev/baby-shower-planner</loc>
     <lastmod>2026-11-05</lastmod>
   </url>
   <url>
-    <loc>https://celebrai-planner.netlify.app/anniversary-party-planner</loc>
+    <loc>https://celebrai-planner.pages.dev/anniversary-party-planner</loc>
     <lastmod>2026-11-05</lastmod>
   </url>
 </urlset>
