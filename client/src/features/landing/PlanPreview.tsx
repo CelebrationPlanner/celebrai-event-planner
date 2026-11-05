@@ -15,7 +15,7 @@ export function PlanPreview() {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className="relative rounded-3xl border bg-card p-5 shadow-[0_24px_60px_-28px_rgb(94_67_181/0.35)] sm:p-6"
+      className="relative rounded-3xl border bg-card p-5 shadow-[0_24px_60px_-28px_rgb(11_93_115/0.30)] sm:p-6"
     >
       <figcaption className="sr-only">Example of a generated plan for a children’s birthday party</figcaption>
       <div className="flex items-start justify-between gap-3">

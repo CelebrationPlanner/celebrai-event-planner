@@ -1,5 +1,4 @@
 import { ArrowRight, Check } from 'lucide-react'
-import * as m from 'motion/react-m'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
@@ -60,7 +59,7 @@ export default function LandingPage() {
 
       <main>
         <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-12 pb-20 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:pt-20">
-          <m.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+          <div>
             <Badge variant="outline" className="mb-5 gap-1.5 border-primary/30 bg-card text-secondary-foreground">
               <span className="size-1.5 rounded-full bg-coral" aria-hidden="true" />
               Plans that explain themselves
@@ -97,7 +96,7 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
-          </m.div>
+          </div>
           <PlanPreview />
         </section>
 

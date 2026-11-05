@@ -2,12 +2,12 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/dm-sans";
-@import "@fontsource/dm-serif-display";
+@import "@fontsource-variable/bricolage-grotesque";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: 'DM Serif Display', Georgia, serif;
+    --font-heading: 'Bricolage Grotesque Variable', system-ui, sans-serif;
     --font-sans: 'DM Sans Variable', system-ui, sans-serif;
     --color-coral: var(--coral);
     --color-coral-soft: var(--coral-soft);
@@ -55,44 +55,44 @@
 }
 
 :root {
-    /* CelebrAI palette: warm ivory, soft purple, coral and gold accents (AA-checked text pairs) */
-    --background: #FBF8F3;
-    --foreground: #2A2433;
+    /* CelebrAI palette: peacock blue with marigold accents on white (AA-checked text pairs) */
+    --background: #FFFFFF;
+    --foreground: #14232A;
     --card: #FFFFFF;
-    --card-foreground: #2A2433;
+    --card-foreground: #14232A;
     --popover: #FFFFFF;
-    --popover-foreground: #2A2433;
-    --primary: #5E43B5;
+    --popover-foreground: #14232A;
+    --primary: #0B5D73;
     --primary-foreground: #FFFFFF;
-    --secondary: #F1ECFA;
-    --secondary-foreground: #3F2D80;
-    --muted: #F4F0EA;
-    --muted-foreground: #6B6474;
-    --accent: #FDEDEA;
-    --accent-foreground: #9C3B2C;
+    --secondary: #E3F1F4;
+    --secondary-foreground: #0A4A5C;
+    --muted: #F4F7F8;
+    --muted-foreground: #52636B;
+    --accent: #FDEFCF;
+    --accent-foreground: #7A4F00;
     --destructive: #B4321F;
-    --border: #E9E2D8;
-    --input: #DDD5CA;
-    --ring: #8B72D6;
-    --coral: #E8735F;
-    --coral-soft: #FDEDEA;
-    --gold: #C9962B;
-    --gold-soft: #FBF0D9;
-    --gold-foreground: #8A6212;
-    --chart-1: #5E43B5;
-    --chart-2: #E8735F;
-    --chart-3: #C9962B;
-    --chart-4: #A794E0;
-    --chart-5: #F3B3A6;
+    --border: #DCE4E7;
+    --input: #CBD6DA;
+    --ring: #3A8FA6;
+    --coral: #D98C0A;
+    --coral-soft: #FDEFCF;
+    --gold: #E9A21C;
+    --gold-soft: #FDEFCF;
+    --gold-foreground: #7A4F00;
+    --chart-1: #0B5D73;
+    --chart-2: #E9A21C;
+    --chart-3: #7FB9C8;
+    --chart-4: #F4C766;
+    --chart-5: #2E8A9E;
     --radius: 0.875rem;
     --sidebar: #FFFFFF;
-    --sidebar-foreground: #2A2433;
-    --sidebar-primary: #5E43B5;
+    --sidebar-foreground: #14232A;
+    --sidebar-primary: #0B5D73;
     --sidebar-primary-foreground: #FFFFFF;
-    --sidebar-accent: #F1ECFA;
-    --sidebar-accent-foreground: #3F2D80;
-    --sidebar-border: #E9E2D8;
-    --sidebar-ring: #8B72D6;
+    --sidebar-accent: #E3F1F4;
+    --sidebar-accent-foreground: #0A4A5C;
+    --sidebar-border: #DCE4E7;
+    --sidebar-ring: #3A8FA6;
 }
 
 @layer base {
@@ -107,6 +107,11 @@
     }
   h1, h2, h3 {
     text-wrap: balance;
+  }
+  /* Bricolage needs weight and tighter tracking to read as a display face (utilities still override). */
+  .font-heading {
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 }
 

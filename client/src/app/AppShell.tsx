@@ -1,5 +1,4 @@
 import { CalendarPlus, Info, LayoutDashboard, LogOut, Menu, Settings, Sparkles } from 'lucide-react'
-import * as m from 'motion/react-m'
 import { useState } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigation } from 'react-router'
 import { Logo } from '@/components/Logo'
@@ -137,16 +136,13 @@ export default function AppShell() {
         </aside>
       )}
 
-      <m.main
+      <main
         id="main"
         key={pathname.split('/').slice(0, 3).join('/')}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
         className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8"
       >
         <Outlet />
-      </m.main>
+      </main>
     </div>
   )
 }
