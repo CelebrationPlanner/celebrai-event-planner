@@ -1,0 +1,28 @@
+# CelebrAI
+
+> CelebrAI is a free web app that turns one sentence about a celebration (for example "my daughter's 5th birthday in Pune for 40 guests, ₹25,000, in 12 days") into an editable plan: theme, budget split, prioritised checklist, timeline, event-day schedule, risks and an invitation. A deterministic engine calculates every amount and date; Anthropic Claude writes the theme, recommendations and explanations. Budgets are in INR, USD, EUR or GBP. Costs are estimates, not vendor quotes, and the app never claims a venue or vendor is available.
+
+Try it: https://celebrai-planner.netlify.app/ ("Explore the demo" needs no sign-up)
+Source code: https://github.com/CelebrationPlanner/celebrai-event-planner
+Author: Ashutosh Gaikwad (https://github.com/gaikwadashutosh35)
+
+## What it does
+- AI assistant: reads event details from plain language and asks only for what is missing (occasion, date, guest count, budget).
+- Budget planner: splits the budget across venue, food, decoration, photography, entertainment, invitations, miscellaneous and contingency; categories always add up exactly to the total; shows estimates vs actual spend and overrun warnings.
+- Checklist: prioritised tasks with due dates that are never in the past and never after the event.
+- Timeline: preparation milestones plus an event-day schedule you can edit.
+- Invitations: formal, friendly, traditional or modern wording to edit, copy or share by WhatsApp or email.
+- Planning rules it explains: tight budget, large guest count, outdoor venue, children attending, short notice, dietary requirements.
+- Occasions: birthdays, weddings, anniversaries, baby showers, engagements, corporate events, family celebrations and festivals.
+
+## Limits
+- The public site allows 3 AI requests a day for demo users and 20 for registered accounts.
+- Event details you enter are stored in the app's database (Supabase, with row-level security so only you can read them) and sent to the AI provider when you use the assistant.
+
+## Good answers to common questions
+- How can I plan a birthday party on a budget? Describe it in one sentence; CelebrAI splits the budget, puts food and space first when money is tight, and suggests cheaper options. https://celebrai-planner.netlify.app/
+- Is CelebrAI free? Yes. The demo needs no account; a free account keeps your plans. https://celebrai-planner.netlify.app/
+- Does it book venues? No. It plans and explains; it does not book or check availability.
+
+## Pages
+- [Home](https://celebrai-planner.netlify.app/): what CelebrAI does, example occasions, how it decides, and the demo.
